@@ -14,19 +14,10 @@ export default function FitnessDashboard() {
   const [water, setWater] = useState("");
   const [calories, setCalories] = useState("");
   const [chartData, setChartData] = useState([]);
-  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    loadUser();
     loadHistory();
   }, []);
-
-  const loadUser = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    setUser(user);
-  };
 
   const loadHistory = async () => {
     const {
@@ -89,7 +80,14 @@ export default function FitnessDashboard() {
           width: "350px",
           color: "white",
           boxShadow: "0 8px 30px rgba(0,0,0,0.4)",
+          transition: "0.5s",
         }}
+        onMouseOver={(e) =>
+          (e.currentTarget.style.transform = "scale(1.02)")
+        }
+        onMouseOut={(e) =>
+          (e.currentTarget.style.transform = "scale(1)")
+        }
       >
         <h2 style={{ textAlign: "center" }}>💪 Fitness Dashboard</h2>
 
@@ -106,7 +104,12 @@ export default function FitnessDashboard() {
             marginBottom: "10px",
             background: "#1e293b",
             color: "white",
+            transition: "0.3s",
           }}
+          onFocus={(e) =>
+            (e.target.style.boxShadow = "0 0 10px #22c55e")
+          }
+          onBlur={(e) => (e.target.style.boxShadow = "none")}
         />
 
         <input
@@ -122,7 +125,12 @@ export default function FitnessDashboard() {
             marginBottom: "10px",
             background: "#1e293b",
             color: "white",
+            transition: "0.3s",
           }}
+          onFocus={(e) =>
+            (e.target.style.boxShadow = "0 0 10px #22c55e")
+          }
+          onBlur={(e) => (e.target.style.boxShadow = "none")}
         />
 
         <button
@@ -136,7 +144,20 @@ export default function FitnessDashboard() {
             color: "white",
             fontWeight: "bold",
             cursor: "pointer",
+            transition: "0.3s",
           }}
+          onMouseOver={(e) =>
+            (e.target.style.transform = "scale(1.05)")
+          }
+          onMouseOut={(e) =>
+            (e.target.style.transform = "scale(1)")
+          }
+          onMouseDown={(e) =>
+            (e.target.style.transform = "scale(0.95)")
+          }
+          onMouseUp={(e) =>
+            (e.target.style.transform = "scale(1.05)")
+          }
         >
           Mentés
         </button>
@@ -153,7 +174,20 @@ export default function FitnessDashboard() {
             fontWeight: "bold",
             marginTop: "10px",
             cursor: "pointer",
+            transition: "0.3s",
           }}
+          onMouseOver={(e) =>
+            (e.target.style.transform = "scale(1.05)")
+          }
+          onMouseOut={(e) =>
+            (e.target.style.transform = "scale(1)")
+          }
+          onMouseDown={(e) =>
+            (e.target.style.transform = "scale(0.95)")
+          }
+          onMouseUp={(e) =>
+            (e.target.style.transform = "scale(1.05)")
+          }
         >
           Kilépés
         </button>
