@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import supabase from "./supabaseClient";
-
 import {
   LineChart,
   Line,
@@ -8,16 +7,45 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
+  ResponsiveContainer,
 } from "recharts";
+
+const WATER_GOAL = 2000;
+const CALORIES_GOAL = 1800;
 
 export default function FitnessDashboard() {
   const [water, setWater] = useState("");
   const [calories, setCalories] = useState("");
+  const [message, setMessage] = useState("");
   const [chartData, setChartData] = useState([]);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    loadData();
     loadHistory();
   }, []);
+
+  const loadData = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const today = new Date().toISOString().split("T")[0];
+
+    const { data } = await supabase
+      .from("daily_stats")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("date", today)
+      .maybeSingle();
+
+    if (data) {
+      setWater(data.water?.toString() || "");
+      setCalories(data.calories?.toString() || "");
+    }
+  };
 
   const loadHistory = async () => {
     const {
@@ -28,14 +56,17 @@ export default function FitnessDashboard() {
 
     const { data } = await supabase
       .from("daily_stats")
-      .select("*")
+      .select("date, water, calories")
       .eq("user_id", user.id)
       .order("date", { ascending: true });
 
     setChartData(data || []);
   };
 
-  const saveData = async () => {
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage("Mentés...");
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -44,173 +75,144 @@ export default function FitnessDashboard() {
 
     const today = new Date().toISOString().split("T")[0];
 
-    await supabase.from("daily_stats").upsert({
-      user_id: user.id,
-      water: parseInt(water),
-      calories: parseInt(calories),
-      date: today,
-    });
+    await supabase.from("daily_stats").upsert(
+      [
+        {
+          user_id: user.id,
+          date: today,
+          water: Number(water || 0),
+          calories: Number(calories || 0),
+        },
+      ],
+      { onConflict: "user_id,date" }
+    );
 
-    setWater("");
-    setCalories("");
+    setSaving(false);
+    setMessage("Mentve! 💾");
     loadHistory();
   };
 
-  const logout = async () => {
+  const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/";
   };
 
+  const waterPercent = useMemo(
+    () => Math.min((Number(water || 0) / WATER_GOAL) * 100, 100),
+    [water]
+  );
+
+  const caloriesPercent = useMemo(
+    () => Math.min((Number(calories || 0) / CALORIES_GOAL) * 100, 100),
+    [calories]
+  );
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #0f172a, #1e293b)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <div
-        style={{
-          background: "rgba(255,255,255,0.05)",
-          backdropFilter: "blur(12px)",
-          borderRadius: "20px",
-          padding: "25px",
-          width: "350px",
-          color: "white",
-          boxShadow: "0 8px 30px rgba(0,0,0,0.4)",
-          transition: "0.5s",
-        }}
-        onMouseOver={(e) =>
-          (e.currentTarget.style.transform = "scale(1.02)")
-        }
-        onMouseOut={(e) =>
-          (e.currentTarget.style.transform = "scale(1)")
-        }
-      >
-        <h2 style={{ textAlign: "center" }}>💪 Fitness Dashboard</h2>
+    <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center px-4">
+      <div className="w-full max-w-4xl grid md:grid-cols-2 gap-6">
 
-        <input
-          type="number"
-          placeholder="💧 Víz (ml)"
-          value={water}
-          onChange={(e) => setWater(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "10px",
-            borderRadius: "10px",
-            border: "none",
-            marginBottom: "10px",
-            background: "#1e293b",
-            color: "white",
-            transition: "0.3s",
-          }}
-          onFocus={(e) =>
-            (e.target.style.boxShadow = "0 0 10px #22c55e")
-          }
-          onBlur={(e) => (e.target.style.boxShadow = "none")}
-        />
+        {/* BAL OLDAL */}
+        <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-white/10">
+          <h1 className="text-2xl font-bold mb-4">💪 Dashboard</h1>
 
-        <input
-          type="number"
-          placeholder="🔥 Kalória"
-          value={calories}
-          onChange={(e) => setCalories(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "10px",
-            borderRadius: "10px",
-            border: "none",
-            marginBottom: "10px",
-            background: "#1e293b",
-            color: "white",
-            transition: "0.3s",
-          }}
-          onFocus={(e) =>
-            (e.target.style.boxShadow = "0 0 10px #22c55e")
-          }
-          onBlur={(e) => (e.target.style.boxShadow = "none")}
-        />
+          <input
+            type="number"
+            placeholder="💧 Víz (ml)"
+            value={water}
+            onChange={(e) => setWater(e.target.value)}
+            className="w-full mb-3 p-3 rounded-xl bg-slate-900 border border-white/10 focus:ring-2 focus:ring-emerald-400 outline-none"
+          />
 
-        <button
-          onClick={saveData}
-          style={{
-            width: "100%",
-            padding: "12px",
-            borderRadius: "10px",
-            border: "none",
-            background: "#22c55e",
-            color: "white",
-            fontWeight: "bold",
-            cursor: "pointer",
-            transition: "0.3s",
-          }}
-          onMouseOver={(e) =>
-            (e.target.style.transform = "scale(1.05)")
-          }
-          onMouseOut={(e) =>
-            (e.target.style.transform = "scale(1)")
-          }
-          onMouseDown={(e) =>
-            (e.target.style.transform = "scale(0.95)")
-          }
-          onMouseUp={(e) =>
-            (e.target.style.transform = "scale(1.05)")
-          }
-        >
-          Mentés
-        </button>
+          <input
+            type="number"
+            placeholder="🔥 Kalória"
+            value={calories}
+            onChange={(e) => setCalories(e.target.value)}
+            className="w-full mb-4 p-3 rounded-xl bg-slate-900 border border-white/10 focus:ring-2 focus:ring-orange-400 outline-none"
+          />
 
-        <button
-          onClick={logout}
-          style={{
-            width: "100%",
-            padding: "12px",
-            borderRadius: "10px",
-            border: "none",
-            background: "#ef4444",
-            color: "white",
-            fontWeight: "bold",
-            marginTop: "10px",
-            cursor: "pointer",
-            transition: "0.3s",
-          }}
-          onMouseOver={(e) =>
-            (e.target.style.transform = "scale(1.05)")
-          }
-          onMouseOut={(e) =>
-            (e.target.style.transform = "scale(1)")
-          }
-          onMouseDown={(e) =>
-            (e.target.style.transform = "scale(0.95)")
-          }
-          onMouseUp={(e) =>
-            (e.target.style.transform = "scale(1.05)")
-          }
-        >
-          Kilépés
-        </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full bg-emerald-500 py-3 rounded-xl font-semibold hover:scale-105 active:scale-95 transition"
+          >
+            {saving ? "Mentés..." : "Mentés"}
+          </button>
 
-        <div
-          style={{
-            marginTop: "20px",
-            padding: "10px",
-            background: "rgba(255,255,255,0.05)",
-            borderRadius: "10px",
-          }}
-        >
-          <h3>📊 Statisztika</h3>
+          <button
+            onClick={handleLogout}
+            className="w-full mt-3 bg-red-500 py-3 rounded-xl font-semibold hover:scale-105 active:scale-95 transition"
+          >
+            Kilépés
+          </button>
 
-          <LineChart width={300} height={200} data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-            <XAxis dataKey="date" stroke="#ccc" />
-            <YAxis stroke="#ccc" />
-            <Tooltip />
-            <Line type="monotone" dataKey="water" stroke="#38bdf8" />
-            <Line type="monotone" dataKey="calories" stroke="#f97316" />
-          </LineChart>
+          <p className="text-center mt-3 text-sm text-gray-300">{message}</p>
+
+          {/* PROGRESS */}
+          <div className="mt-6">
+            <p className="text-sm">💧 Víz: {water || 0}/{WATER_GOAL}</p>
+            <div className="h-2 bg-slate-800 rounded-full overflow-hidden mb-3">
+              <div
+                className="h-full bg-sky-400 transition-all duration-500"
+                style={{ width: `${waterPercent}%` }}
+              />
+            </div>
+
+            <p className="text-sm">🔥 Kalória: {calories || 0}/{CALORIES_GOAL}</p>
+            <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-orange-400 transition-all duration-500"
+                style={{ width: `${caloriesPercent}%` }}
+              />
+            </div>
+          </div>
         </div>
+
+        {/* JOBB OLDAL */}
+        <div className="bg-white/5 backdrop-blur-xl p-6 rounded-3xl shadow-xl border border-white/10">
+          <h2 className="text-xl font-semibold mb-4">📊 Statisztika</h2>
+
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid stroke="#334155" />
+                <XAxis
+                  dataKey="date"
+                  stroke="#94a3b8"
+                  tickFormatter={(d) => d?.slice(5)}
+                />
+                <YAxis stroke="#94a3b8" />
+                <Tooltip />
+                <Line
+                  type="monotone"
+                  dataKey="water"
+                  stroke="#38bdf8"
+                  strokeWidth={3}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="calories"
+                  stroke="#fb923c"
+                  strokeWidth={3}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* LISTA */}
+          <div className="mt-6 space-y-2">
+            {chartData.slice().reverse().map((item, i) => (
+              <div
+                key={i}
+                className="flex justify-between bg-slate-900 p-3 rounded-xl text-sm hover:bg-slate-800 transition"
+              >
+                <span>{item.date?.slice(5)}</span>
+                <span>💧 {item.water} | 🔥 {item.calories}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );
