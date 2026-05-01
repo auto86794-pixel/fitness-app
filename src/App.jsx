@@ -1,48 +1,78 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import supabase from "./supabaseClient"; 
-import LoginScreen from "./features/auth/LoginScreen";
+import supabase from "./supabaseClient";
 import FitnessDashboard from "./FitnessDashboard";
 
-function App() {
+export default function App() {
   const [session, setSession] = useState(null);
 
   useEffect(() => {
-    // meglévő session lekérése
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
     });
 
-    // figyeli login/logout-ot
-    const { data: listener } = supabase.auth.onAuthStateChange(
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
       }
     );
 
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={
-            session ? <Navigate to="/dashboard" /> : <LoginScreen />
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            session ? <FitnessDashboard /> : <Navigate to="/" />
-          }
-        />
-      </Routes>
-    </BrowserRouter>
-  );
-}
+  if (!session) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          background:
+            "linear-gradient(135deg,#020617,#111827)",
+          color: "white",
+          fontFamily: "Inter, sans-serif",
+        }}
+      >
+        <div
+          style={{
+            background: "rgba(255,255,255,0.06)",
+            padding: 40,
+            borderRadius: 24,
+            textAlign: "center",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <h1>🌿 Wellness RPG</h1>
 
-export default App;
+          <p>Login to continue your journey</p>
+
+          <button
+            onClick={async () => {
+              await supabase.auth.signInWithPassword({
+                email: "teszt@teszt.com",
+                password: "123456",
+              });
+            }}
+            style={{
+              marginTop: 20,
+              padding: "14px 24px",
+              border: "none",
+              borderRadius: 14,
+              background:
+                "linear-gradient(135deg,#8b5cf6,#ec4899)",
+              color: "white",
+              cursor: "pointer",
+              fontWeight: "bold",
+            }}
+          >
+            TEST LOGIN
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <FitnessDashboard />;
+}
