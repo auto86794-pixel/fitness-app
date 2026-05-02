@@ -1,110 +1,24 @@
 import { useEffect, useState } from "react";
 import supabase from "./supabaseClient";
 
-export default function HomefitApp() {
+export default function FitnessDashboard() {
 
-  // =========================
-  // PROFILE STATES
-  // =========================
-
-  const [gender, setGender] =
-    useState("Férfi");
-
-  const [age, setAge] =
-    useState(16);
-
-  const [weight, setWeight] =
-    useState(110);
-
-  const [height, setHeight] =
-    useState(192);
-
-  const [goal, setGoal] =
-    useState("Fogyás");
-
-  const [fitnessLevel, setFitnessLevel] =
-    useState("Teljesen kezdő");
-
-  const [weeklyDays, setWeeklyDays] =
-    useState(3);
-
-  const [workoutMinutes, setWorkoutMinutes] =
-    useState(20);
-
-  const [profileCompleted, setProfileCompleted] =
-    useState(false);
-
-  // =========================
-  // DASHBOARD STATES
-  // =========================
-
-  const [water, setWater] =
-    useState(0);
-
-  const [calories, setCalories] =
-    useState(0);
-
-  const [xp, setXp] =
-    useState(0);
-
-  const [level, setLevel] =
-    useState(1);
+  const [xp, setXp] = useState(0);
 
   const [coins, setCoins] =
     useState(120);
 
-  const [energy, setEnergy] =
-    useState(80);
-
-  const [mood, setMood] =
-    useState("😌 Nyugodt");
-
-  const [message, setMessage] =
-    useState("");
-
-  const [badges, setBadges] =
-    useState([]);
-
-  const [dailyClaimed, setDailyClaimed] =
-    useState(false);
-
-  const [activeTab, setActiveTab] =
-    useState("home");
-
-  const [loading, setLoading] =
-    useState(true);
-
-  // =========================
-  // WORKOUT
-  // =========================
+  const [level, setLevel] =
+    useState(1);
 
   const [todayWorkout, setTodayWorkout] =
     useState(null);
 
   const [workoutLoading, setWorkoutLoading] =
-    useState(false);
+    useState(true);
 
-  // =========================
-  // GOALS
-  // =========================
-
-  const waterGoal = 2000;
-
-  const calorieGoal = 1800;
-
-  // =========================
-  // BMI
-  // =========================
-
-  const bmi = (
-    weight /
-    ((height / 100) *
-      (height / 100))
-  ).toFixed(1);
-
-  // =========================
-  // XP
-  // =========================
+  const [message, setMessage] =
+    useState("");
 
   const xpPercent = xp % 100;
 
@@ -113,124 +27,21 @@ export default function HomefitApp() {
   // =========================
 
   const generateWorkout = () => {
-
-    if (goal === "Fogyás") {
-      return {
-        title: "🔥 Fogyás Edzés",
-
-        exercises: [
-          "20 perc séta",
-          "3x15 guggolás",
-          "3x20 jumping jack",
-          "2x30 mp plank",
-        ],
-
-        xp_reward: 40,
-
-        coin_reward: 20,
-      };
-    }
-
-    if (goal === "Izomépítés") {
-      return {
-        title: "💪 Izomépítő Edzés",
-
-        exercises: [
-          "3x10 fekvőtámasz",
-          "3x15 guggolás",
-          "3x12 kitörés",
-          "3x20 mp plank",
-        ],
-
-        xp_reward: 50,
-
-        coin_reward: 25,
-      };
-    }
-
     return {
-      title: "🌿 Wellness Edzés",
+      title: "🔥 Fogyás Edzés",
 
       exercises: [
-        "15 perc séta",
-        "jóga nyújtás",
-        "2x15 guggolás",
-        "légzőgyakorlat",
+        "20 perc séta",
+        "3x15 guggolás",
+        "3x20 jumping jack",
+        "2x30 mp plank",
       ],
 
-      xp_reward: 30,
+      xp_reward: 40,
 
-      coin_reward: 15,
+      coin_reward: 20,
     };
   };
-
-  // =========================
-  // LOAD PROFILE
-  // =========================
-
-  useEffect(() => {
-
-    const loadProfile = async () => {
-
-      const {
-        data: { user },
-      } =
-        await supabase.auth.getUser();
-
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      const { data: profileData } =
-        await supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
-
-      if (profileData) {
-
-        setGender(
-          profileData.gender || "Férfi"
-        );
-
-        setAge(profileData.age || 16);
-
-        setWeight(
-          profileData.weight || 70
-        );
-
-        setHeight(
-          profileData.height || 170
-        );
-
-        setGoal(
-          profileData.goal || "Fogyás"
-        );
-
-        setFitnessLevel(
-          profileData.level ||
-            "Teljesen kezdő"
-        );
-
-        setWeeklyDays(
-          profileData.weekly_days || 3
-        );
-
-        setWorkoutMinutes(
-          profileData.workout_minutes || 20
-        );
-
-        setProfileCompleted(true);
-      }
-
-      setLoading(false);
-    };
-
-    loadProfile();
-
-  }, []);
 
   // =========================
   // LOAD WORKOUT
@@ -253,11 +64,11 @@ export default function HomefitApp() {
 
       if (!user) {
 
-        const generatedWorkout =
+        const generated =
           generateWorkout();
 
         setTodayWorkout({
-          ...generatedWorkout,
+          ...generated,
           completed: false,
         });
 
@@ -282,9 +93,7 @@ export default function HomefitApp() {
           .eq("workout_date", today)
           .single();
 
-      // =========================
       // EXISTING WORKOUT
-      // =========================
 
       if (data) {
 
@@ -295,67 +104,43 @@ export default function HomefitApp() {
         return;
       }
 
-      // =========================
-      // GENERATE NEW WORKOUT
-      // =========================
+      // CREATE NEW WORKOUT
 
-      const generatedWorkout =
+      const generated =
         generateWorkout();
 
       const {
         data: insertedWorkout,
-        error,
       } =
         await supabase
           .from("workouts")
           .insert({
             user_id: user.id,
 
-            title:
-              generatedWorkout.title,
+            title: generated.title,
 
             exercises:
-              generatedWorkout.exercises,
+              generated.exercises,
 
             xp_reward:
-              generatedWorkout.xp_reward,
+              generated.xp_reward,
 
             coin_reward:
-              generatedWorkout.coin_reward,
+              generated.coin_reward,
 
             workout_date: today,
           })
           .select()
           .single();
 
-      console.log(error);
-
-      // =========================
-      // FALLBACK
-      // =========================
-
-      if (!insertedWorkout) {
-
-        setTodayWorkout({
-          ...generatedWorkout,
-          completed: false,
-        });
-
-        setWorkoutLoading(false);
-
-        return;
-      }
-
       setTodayWorkout(insertedWorkout);
 
       setWorkoutLoading(false);
     };
 
-    if (profileCompleted) {
-      loadWorkout();
-    }
+    loadWorkout();
 
-  }, [profileCompleted]);
+  }, []);
 
   // =========================
   // LEVEL
@@ -370,68 +155,67 @@ export default function HomefitApp() {
   }, [xp]);
 
   // =========================
-  // BADGES
+  // COMPLETE WORKOUT
   // =========================
 
-  useEffect(() => {
-
-    const newBadges = [];
-
-    if (water >= waterGoal) {
-      newBadges.push(
-        "💧 Hidratálás Hőse"
-      );
-    }
+  const completeWorkout = async () => {
 
     if (
-      calories > 0 &&
-      calories <= calorieGoal
+      !todayWorkout ||
+      todayWorkout.completed
     ) {
-      newBadges.push(
-        "🔥 Egyensúly Mester"
-      );
+      return;
     }
 
-    if (xp >= 100) {
-      newBadges.push(
-        "⭐ XP Újonc"
-      );
-    }
+    const gainedXp =
+      todayWorkout.xp_reward || 40;
 
-    if (xp >= 250) {
-      newBadges.push(
-        "🌿 Wellness Harcos"
-      );
-    }
+    const gainedCoins =
+      todayWorkout.coin_reward || 20;
 
-    if (coins >= 200) {
-      newBadges.push(
-        "🪙 Coin Gyűjtő"
-      );
-    }
+    // UPDATE UI
 
-    setBadges(newBadges);
-
-  }, [water, calories, xp, coins]);
-
-  // =========================
-  // LOADING
-  // =========================
-
-  if (loading) {
-
-    return (
-      <div style={loadingStyle}>
-        <h1>⏳ Betöltés...</h1>
-      </div>
+    setXp((prev) =>
+      prev + gainedXp
     );
-  }
+
+    setCoins((prev) =>
+      prev + gainedCoins
+    );
+
+    setTodayWorkout({
+      ...todayWorkout,
+      completed: true,
+    });
+
+    setMessage(
+      `🏆 +${gainedXp} XP és +${gainedCoins} coin`
+    );
+
+    // SAVE TO DATABASE
+
+    const {
+      data: { user },
+    } =
+      await supabase.auth.getUser();
+
+    if (user) {
+
+      await supabase
+        .from("workouts")
+        .update({
+          completed: true,
+        })
+        .eq("id", todayWorkout.id);
+    }
+  };
 
   // =========================
-  // APP
+  // UI
   // =========================
 
   return (
+
     <div style={pageStyle}>
 
       <div style={phoneFrame}>
@@ -440,7 +224,9 @@ export default function HomefitApp() {
           🔥 Homefit
         </h1>
 
-        <div style={heroCardNew}>
+        {/* HERO */}
+
+        <div style={heroCard}>
 
           <div>
 
@@ -457,13 +243,84 @@ export default function HomefitApp() {
                 marginTop: 12,
               }}
             >
+
               <div style={xpText}>
                 ⭐ {xp} XP
               </div>
 
               <div style={muted}>
-                🪙 {coins} coin · ⚡ {energy}/100
+                🪙 {coins} coin
               </div>
+
+              {/* XP BAR */}
+
+              <div
+                style={{
+                  marginTop: 14,
+                }}
+              >
+
+                <div
+                  style={{
+                    display: "flex",
+
+                    justifyContent:
+                      "space-between",
+
+                    marginBottom: 8,
+
+                    fontSize: 13,
+
+                    opacity: 0.8,
+                  }}
+                >
+                  <span>
+                    XP haladás
+                  </span>
+
+                  <span>
+                    {xpPercent}/100
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    width: "100%",
+
+                    height: 12,
+
+                    borderRadius: 999,
+
+                    background:
+                      "rgba(255,255,255,0.08)",
+
+                    overflow: "hidden",
+                  }}
+                >
+
+                  <div
+                    style={{
+                      width: `${xpPercent}%`,
+
+                      height: "100%",
+
+                      borderRadius: 999,
+
+                      background:
+                        "linear-gradient(90deg,#22c55e,#14b8a6)",
+
+                      transition:
+                        "all 0.5s ease",
+
+                      boxShadow:
+                        "0 0 20px rgba(34,197,94,0.5)",
+                    }}
+                  />
+
+                </div>
+
+              </div>
+
             </div>
 
           </div>
@@ -474,21 +331,27 @@ export default function HomefitApp() {
 
         </div>
 
-        <div style={section}>
+        {/* WORKOUT */}
 
-          <h2 style={sectionTitle}>
+        <div
+          style={{
+            marginTop: 24,
+          }}
+        >
+
+          <h2>
             🔥 Mai edzés
           </h2>
 
           {workoutLoading ? (
 
-            <div style={workoutCardNew}>
+            <div style={card}>
               Betöltés...
             </div>
 
           ) : todayWorkout ? (
 
-            <div style={workoutCardNew}>
+            <div style={card}>
 
               <h3>
                 {todayWorkout.title}
@@ -515,9 +378,56 @@ export default function HomefitApp() {
 
               </div>
 
+              {/* BUTTON */}
+
+              <button
+                onClick={
+                  completeWorkout
+                }
+                disabled={
+                  todayWorkout.completed
+                }
+                style={{
+                  marginTop: 18,
+
+                  width: "100%",
+
+                  padding: 14,
+
+                  borderRadius: 16,
+
+                  border: "none",
+
+                  cursor: "pointer",
+
+                  fontWeight: "bold",
+
+                  color: "white",
+
+                  background:
+                    todayWorkout.completed
+                      ? "#334155"
+                      : "linear-gradient(135deg,#22c55e,#14b8a6)",
+                }}
+              >
+                {todayWorkout.completed
+                  ? "✅ Teljesítve"
+                  : "🏆 Edzés kész"}
+              </button>
+
             </div>
 
           ) : null}
+
+          {/* MESSAGE */}
+
+          {message && (
+
+            <div style={messageBox}>
+              {message}
+            </div>
+
+          )}
 
         </div>
 
@@ -535,7 +445,7 @@ const pageStyle = {
   minHeight: "100vh",
 
   background:
-    "radial-gradient(circle at top left, #07111f, #020617 40%, #000000)",
+    "radial-gradient(circle at top left, #07111f, #000)",
 
   display: "flex",
 
@@ -545,21 +455,8 @@ const pageStyle = {
 
   padding: 20,
 
-  fontFamily: "Inter, sans-serif",
-};
-
-const loadingStyle = {
-  minHeight: "100vh",
-
-  display: "flex",
-
-  justifyContent: "center",
-
-  alignItems: "center",
-
-  background: "#020617",
-
-  color: "white",
+  fontFamily:
+    "Inter, sans-serif",
 };
 
 const phoneFrame = {
@@ -567,14 +464,15 @@ const phoneFrame = {
 
   maxWidth: 390,
 
-  background:
-    "rgba(255,255,255,0.06)",
-
-  borderRadius: 34,
-
   padding: 20,
 
-  backdropFilter: "blur(18px)",
+  borderRadius: 30,
+
+  background:
+    "rgba(255,255,255,0.05)",
+
+  backdropFilter:
+    "blur(16px)",
 
   color: "white",
 
@@ -583,30 +481,31 @@ const phoneFrame = {
 };
 
 const title = {
-  margin: 0,
-
   fontSize: 28,
+
+  margin: 0,
 };
 
-const heroCardNew = {
+const heroCard = {
+  marginTop: 10,
+
+  padding: 20,
+
+  borderRadius: 24,
+
   background:
-    "linear-gradient(135deg, rgba(34,197,94,0.14), rgba(20,184,166,0.10))",
-
-  borderRadius: 26,
-
-  padding: 22,
+    "linear-gradient(135deg,#22c55e22,#14b8a622)",
 
   display: "flex",
 
-  justifyContent: "space-between",
+  justifyContent:
+    "space-between",
 
   alignItems: "center",
-
-  marginTop: 10,
 };
 
 const bigNumber = {
-  fontSize: 34,
+  fontSize: 32,
 
   fontWeight: "bold",
 };
@@ -642,26 +541,38 @@ const avatar = {
   fontSize: 32,
 };
 
-const section = {
-  marginTop: 22,
-};
-
-const sectionTitle = {
-  marginBottom: 12,
-};
-
-const workoutCardNew = {
-  background:
-    "rgba(255,255,255,0.05)",
+const card = {
+  marginTop: 12,
 
   padding: 18,
 
   borderRadius: 22,
+
+  background:
+    "rgba(255,255,255,0.05)",
+
+  border:
+    "1px solid rgba(255,255,255,0.06)",
 };
 
 const exerciseItem = {
-  padding: "8px 0",
+  padding: "10px 0",
 
   borderBottom:
     "1px solid rgba(255,255,255,0.05)",
+};
+
+const messageBox = {
+  marginTop: 14,
+
+  padding: 12,
+
+  borderRadius: 14,
+
+  background:
+    "rgba(34,197,94,0.12)",
+
+  color: "#bbf7d0",
+
+  fontWeight: "bold",
 };
