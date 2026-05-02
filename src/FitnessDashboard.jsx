@@ -7,13 +7,20 @@ export default function HomefitApp() {
   // PROFILE STATES
   // =========================
 
-  const [gender, setGender] = useState("Férfi");
-  const [age, setAge] = useState(16);
+  const [gender, setGender] =
+    useState("Férfi");
 
-  const [weight, setWeight] = useState(110);
-  const [height, setHeight] = useState(192);
+  const [age, setAge] =
+    useState(16);
 
-  const [goal, setGoal] = useState("Fogyás");
+  const [weight, setWeight] =
+    useState(110);
+
+  const [height, setHeight] =
+    useState(192);
+
+  const [goal, setGoal] =
+    useState("Fogyás");
 
   const [fitnessLevel, setFitnessLevel] =
     useState("Teljesen kezdő");
@@ -31,16 +38,20 @@ export default function HomefitApp() {
   // DASHBOARD STATES
   // =========================
 
-  const [water, setWater] = useState(0);
+  const [water, setWater] =
+    useState(0);
 
   const [calories, setCalories] =
     useState(0);
 
-  const [xp, setXp] = useState(0);
+  const [xp, setXp] =
+    useState(0);
 
-  const [level, setLevel] = useState(1);
+  const [level, setLevel] =
+    useState(1);
 
-  const [coins, setCoins] = useState(120);
+  const [coins, setCoins] =
+    useState(120);
 
   const [energy, setEnergy] =
     useState(80);
@@ -51,7 +62,6 @@ export default function HomefitApp() {
   const [message, setMessage] =
     useState("");
 
-  // ✅ JAVÍTVA
   const [badges, setBadges] =
     useState([]);
 
@@ -68,7 +78,6 @@ export default function HomefitApp() {
   // WORKOUT
   // =========================
 
-  // ✅ JAVÍTVA
   const [todayWorkout, setTodayWorkout] =
     useState(null);
 
@@ -236,9 +245,30 @@ export default function HomefitApp() {
       } =
         await supabase.auth.getUser();
 
-      if (!user) return;
-
       setWorkoutLoading(true);
+
+      // =========================
+      // DEMO MODE
+      // =========================
+
+      if (!user) {
+
+        const generatedWorkout =
+          generateWorkout();
+
+        setTodayWorkout({
+          ...generatedWorkout,
+          completed: false,
+        });
+
+        setWorkoutLoading(false);
+
+        return;
+      }
+
+      // =========================
+      // NORMAL USER MODE
+      // =========================
 
       const today = new Date()
         .toISOString()
@@ -252,6 +282,10 @@ export default function HomefitApp() {
           .eq("workout_date", today)
           .single();
 
+      // =========================
+      // EXISTING WORKOUT
+      // =========================
+
       if (data) {
 
         setTodayWorkout(data);
@@ -261,11 +295,16 @@ export default function HomefitApp() {
         return;
       }
 
+      // =========================
+      // GENERATE NEW WORKOUT
+      // =========================
+
       const generatedWorkout =
         generateWorkout();
 
       const {
         data: insertedWorkout,
+        error,
       } =
         await supabase
           .from("workouts")
@@ -288,6 +327,24 @@ export default function HomefitApp() {
           })
           .select()
           .single();
+
+      console.log(error);
+
+      // =========================
+      // FALLBACK
+      // =========================
+
+      if (!insertedWorkout) {
+
+        setTodayWorkout({
+          ...generatedWorkout,
+          completed: false,
+        });
+
+        setWorkoutLoading(false);
+
+        return;
+      }
 
       setTodayWorkout(insertedWorkout);
 
