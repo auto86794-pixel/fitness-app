@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import supabase from "./supabaseClient";
 import FitnessDashboard from "./FitnessDashboard";
 
 function LandingPage() {
@@ -11,7 +10,7 @@ function LandingPage() {
   }
 
   function openDashboard() {
-    window.location.href = "https://fitness-app-two-pi.vercel.app";
+    window.location.href = "/dashboard";
   }
 
   return (
@@ -37,35 +36,27 @@ function LandingPage() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            padding: "16px 24px",
+            padding: 20,
             border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: 999,
+            borderRadius: 24,
+            marginBottom: 40,
             background: "rgba(255,255,255,0.03)",
-            marginBottom: 30,
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              fontWeight: 800,
-              fontSize: 22,
-            }}
-          >
-            ⚡ Homefit
-          </div>
+          <h2>⚡ Homefit</h2>
 
-          <div
-            style={{
-              display: "flex",
-              gap: 20,
-              color: "#94a3b8",
-            }}
-          >
-            <span>Miért működik</span>
-            <span>Edzésterv</span>
-            <span>Tesztelés</span>
+          <div style={{ display: "flex", gap: 20 }}>
+            <a href="#miert" style={{ color: "#cbd5e1" }}>
+              Miért működik
+            </a>
+
+            <a href="#terv" style={{ color: "#cbd5e1" }}>
+              Edzésterv
+            </a>
+
+            <a href="#teszt" style={{ color: "#cbd5e1" }}>
+              Tesztelés
+            </a>
           </div>
         </div>
 
@@ -73,28 +64,27 @@ function LandingPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1.1fr 0.9fr",
-            gap: 24,
+            gridTemplateColumns: "1fr 1fr",
+            gap: 30,
+            marginBottom: 50,
           }}
         >
-          {/* LEFT */}
           <div
             style={{
-              background: "rgba(255,255,255,0.04)",
-              borderRadius: 32,
               padding: 40,
+              borderRadius: 30,
+              background: "rgba(255,255,255,0.03)",
               border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
             <div
               style={{
-                display: "inline-block",
+                background: "rgba(34,197,94,0.12)",
                 padding: "10px 16px",
                 borderRadius: 999,
-                background: "rgba(34,197,94,0.15)",
+                display: "inline-block",
+                marginBottom: 20,
                 color: "#bbf7d0",
-                marginBottom: 24,
-                fontWeight: 700,
               }}
             >
               🏠 Otthoni edzés · kezdőknek · fogyási célra
@@ -105,8 +95,6 @@ function LandingPage() {
                 fontSize: 72,
                 lineHeight: 1,
                 marginBottom: 24,
-                fontWeight: 900,
-                letterSpacing: "-3px",
               }}
             >
               Személyre szabott edzésterv 1 perc alatt
@@ -115,49 +103,44 @@ function LandingPage() {
             <p
               style={{
                 color: "#94a3b8",
-                fontSize: 18,
                 lineHeight: 1.8,
-                maxWidth: 650,
+                fontSize: 18,
+                marginBottom: 30,
               }}
             >
               Add meg az alapadataid, és kapsz egy egyszerű,
               követhető, otthon végezhető heti edzéstervet.
             </p>
 
-            <div
-              style={{
-                display: "flex",
-                gap: 14,
-                marginTop: 30,
-                flexWrap: "wrap",
-              }}
-            >
+            <div style={{ display: "flex", gap: 16 }}>
               <button
+                onClick={openDashboard}
                 style={{
-                  padding: "16px 24px",
+                  padding: "16px 28px",
                   borderRadius: 18,
                   border: "none",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  fontSize: 16,
+                  color: "white",
                   background:
                     "linear-gradient(135deg,#22c55e,#14b8a6)",
-                  color: "white",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  fontSize: 16,
                 }}
               >
                 🔥 Edzéstervem elkészítése
               </button>
 
               <button
+                onClick={openDashboard}
                 style={{
-                  padding: "16px 24px",
+                  padding: "16px 28px",
                   borderRadius: 18,
                   border: "1px solid rgba(255,255,255,0.1)",
-                  background: "rgba(255,255,255,0.03)",
-                  color: "white",
-                  fontWeight: 700,
                   cursor: "pointer",
+                  fontWeight: "bold",
                   fontSize: 16,
+                  color: "white",
+                  background: "rgba(255,255,255,0.03)",
                 }}
               >
                 Demó kipróbálása
@@ -165,202 +148,169 @@ function LandingPage() {
             </div>
           </div>
 
-          {/* RIGHT */}
+          {/* PREVIEW */}
           <div
             style={{
-              background:
-                "linear-gradient(180deg, rgba(15,23,42,0.95), rgba(9,17,31,0.95))",
-              borderRadius: 32,
-              padding: 28,
+              padding: 30,
+              borderRadius: 30,
+              background: "rgba(255,255,255,0.03)",
               border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
+            <h3 style={{ marginBottom: 20 }}>
+              App előnézet
+            </h3>
+
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: 20,
-                color: "#94a3b8",
+                display: "grid",
+                gap: 16,
               }}
             >
-              <span>App előnézet</span>
-
-              <div
-                style={{
-                  background: "rgba(34,197,94,0.15)",
-                  color: "#bbf7d0",
-                  padding: "8px 12px",
-                  borderRadius: 999,
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
-              >
-                Kezdőbarát rendszer
-              </div>
-            </div>
-
-            {[
-              {
-                title: "1. nap - teljes test",
-                list: [
-                  "Guggolás",
-                  "Térdelő fekvőtámasz",
-                  "Plank",
-                ],
-              },
-              {
-                title: "2. nap - teljes test",
-                list: [
-                  "Glute bridge",
-                  "Helyben járás",
-                  "Bird-dog",
-                ],
-              },
-              {
-                title: "3. nap - teljes test",
-                list: [
-                  "Falnál ülés",
-                  "Hasprés",
-                  "Térdemelés helyben",
-                ],
-              },
-            ].map((day, i) => (
-              <div
-                key={i}
-                style={{
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  borderRadius: 24,
-                  padding: 20,
-                  marginBottom: 16,
-                }}
-              >
+              {[
+                ["1. nap", ["Guggolás", "Plank"]],
+                ["2. nap", ["Glute bridge", "Bird-dog"]],
+                ["3. nap", ["Falnál ülés", "Hasprés"]],
+              ].map((day) => (
                 <div
+                  key={day[0]}
                   style={{
-                    fontWeight: 800,
-                    marginBottom: 12,
-                    fontSize: 20,
+                    padding: 20,
+                    borderRadius: 20,
+                    background: "rgba(255,255,255,0.03)",
+                    border:
+                      "1px solid rgba(255,255,255,0.08)",
                   }}
                 >
-                  {day.title}
-                </div>
+                  <strong>{day[0]}</strong>
 
-                <ul
-                  style={{
-                    color: "#94a3b8",
-                    lineHeight: 2,
-                    paddingLeft: 20,
-                  }}
-                >
-                  {day.list.map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+                  <ul style={{ color: "#94a3b8" }}>
+                    {day[1].map((ex) => (
+                      <li key={ex}>{ex}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* CTA SECTION */}
+        {/* FEATURES */}
         <div
+          id="miert"
           style={{
-            marginTop: 40,
-            background: "rgba(255,255,255,0.04)",
-            borderRadius: 32,
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: 20,
+            marginBottom: 50,
+          }}
+        >
+          {[
+            [
+              "🎯",
+              "Nem motivációra épít",
+              "Egyszerű rendszer kezdőknek.",
+            ],
+            [
+              "🧩",
+              "Kezdőkre optimalizálva",
+              "Rövid és követhető blokkok.",
+            ],
+            [
+              "⚡",
+              "Azonnal kipróbálható",
+              "Nincs bonyolult setup.",
+            ],
+          ].map((item) => (
+            <div
+              key={item[1]}
+              style={{
+                padding: 28,
+                borderRadius: 24,
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <div style={{ fontSize: 40 }}>
+                {item[0]}
+              </div>
+
+              <h3>{item[1]}</h3>
+
+              <p style={{ color: "#94a3b8" }}>
+                {item[2]}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA */}
+        <div
+          id="teszt"
+          style={{
             padding: 40,
-            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 30,
+            background:
+              "linear-gradient(135deg, rgba(34,197,94,0.15), rgba(20,184,166,0.12))",
+            border: "1px solid rgba(34,197,94,0.2)",
           }}
         >
           <h2
             style={{
               fontSize: 42,
-              marginBottom: 20,
+              marginBottom: 16,
             }}
           >
-            🔥 Ez csak a kezdet
+            🔥 Ne csak elkezdd – csináld végig
           </h2>
 
           <p
             style={{
-              color: "#94a3b8",
-              fontSize: 18,
+              color: "#cbd5e1",
               lineHeight: 1.8,
-              marginBottom: 24,
+              marginBottom: 20,
             }}
           >
-            A Homefit Dashboardban XP rendszert, napi
-            challenge-eket, jutalmakat és fejlődési rendszert
-            kapsz.
+            A Homefit PRO segít abban, hogy ne csak
+            elkezd, hanem végig is csináld.
           </p>
 
-          <div
+          <button
+            onClick={buyPro}
             style={{
-              display: "flex",
-              gap: 14,
-              flexWrap: "wrap",
+              padding: "18px 32px",
+              borderRadius: 18,
+              border: "none",
+              cursor: "pointer",
+              fontWeight: "bold",
+              fontSize: 18,
+              color: "white",
+              background:
+                "linear-gradient(135deg,#22c55e,#14b8a6)",
             }}
           >
-            <button
-              onClick={openDashboard}
-              style={{
-                padding: "16px 24px",
-                borderRadius: 18,
-                border: "none",
-                background:
-                  "linear-gradient(135deg,#22c55e,#14b8a6)",
-                color: "white",
-                fontWeight: 800,
-                cursor: "pointer",
-                fontSize: 16,
-              }}
-            >
-              🎮 Belépek a Dashboardba
-            </button>
-
-            <button
-              onClick={buyPro}
-              style={{
-                padding: "16px 24px",
-                borderRadius: 18,
-                border: "1px solid rgba(255,255,255,0.1)",
-                background: "rgba(255,255,255,0.03)",
-                color: "white",
-                fontWeight: 700,
-                cursor: "pointer",
-                fontSize: 16,
-              }}
-            >
-              🔥 PRO Program
-            </button>
-          </div>
+            🔥 Kérem a PRO programot – 2990 Ft
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-export default function App() {
-  const [session, setSession] = useState(null);
+function App() {
+  const [showDashboard, setShowDashboard] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    if (window.location.pathname === "/dashboard") {
+      setShowDashboard(true);
+    }
   }, []);
 
-  if (!session) {
-    return <LandingPage />;
+  if (showDashboard) {
+    return <FitnessDashboard />;
   }
 
-  return <FitnessDashboard />;
+  return <LandingPage />;
 }
+
+export default App;
