@@ -1,9 +1,15 @@
+```jsx
 import { useEffect, useState } from "react";
 
 // FIREBASE
-import { getProfile } from "./profileService";
+import {
+  subscribeToProfile,
+  updateProfile,
+} from "./profileService";
 
-export default function FitnessDashboard({ user }) {
+export default function HomefitApp({
+  user,
+}) {
 
   // =========================
   // PROFILE STATES
@@ -68,20 +74,11 @@ export default function FitnessDashboard({ user }) {
   const [energy, setEnergy] =
     useState(80);
 
-  const [mood, setMood] =
-    useState("😌 Nyugodt");
-
   const [message, setMessage] =
     useState("");
 
   const [badges, setBadges] =
     useState([]);
-
-  const [dailyClaimed, setDailyClaimed] =
-    useState(false);
-
-  const [activeTab, setActiveTab] =
-    useState("home");
 
   const [loading, setLoading] =
     useState(true);
@@ -107,16 +104,6 @@ export default function FitnessDashboard({ user }) {
   const waterGoal = 2000;
 
   const calorieGoal = 1800;
-
-  // =========================
-  // BMI
-  // =========================
-
-  const bmi = (
-    weight /
-    ((height / 100) *
-      (height / 100))
-  ).toFixed(1);
 
   // =========================
   // XP
@@ -186,92 +173,97 @@ export default function FitnessDashboard({ user }) {
   };
 
   // =========================
-  // FIREBASE PROFILE LOAD
+  // REALTIME FIREBASE PROFILE
   // =========================
 
   useEffect(() => {
 
-    async function loadProfile() {
-
-      if (!user) {
-
-        setLoading(false);
-
-        return;
-      }
-
-      const profileData =
-        await getProfile(user.uid);
-
-      console.log(
-        "🔥 FIREBASE PROFILE:",
-        profileData
-      );
-
-      if (profileData) {
-
-        setGender(
-          profileData.gender ||
-            "Férfi"
-        );
-
-        setAge(
-          profileData.age || 16
-        );
-
-        setWeight(
-          profileData.weight || 70
-        );
-
-        setHeight(
-          profileData.height || 170
-        );
-
-        setGoal(
-          profileData.goal ||
-            "Fogyás"
-        );
-
-        setFitnessLevel(
-          profileData.fitnessLevel ||
-            "Teljesen kezdő"
-        );
-
-        setWeeklyDays(
-          profileData.weeklyDays || 3
-        );
-
-        setWorkoutMinutes(
-          profileData.workoutMinutes || 20
-        );
-
-        setXp(
-          profileData.xp || 0
-        );
-
-        setCoins(
-          profileData.coins || 120
-        );
-
-        setLevel(
-          profileData.level || 1
-        );
-
-        setWater(
-          profileData.water || 0
-        );
-
-        setCalories(
-          profileData.calories || 0
-        );
-
-        setProfileCompleted(true);
-      }
+    if (!user) {
 
       setLoading(false);
+
+      return;
     }
 
-    loadProfile();
+    const unsubscribe =
+      subscribeToProfile(
+        user.uid,
+        (profileData) => {
+
+          if (!profileData) {
+            return;
+          }
+
+          console.log(
+            "🔥 REALTIME PROFILE:",
+            profileData
+          );
+
+          setGender(
+            profileData.gender ||
+              "Férfi"
+          );
+
+          setAge(
+            profileData.age || 16
+          );
+
+          setWeight(
+            profileData.weight || 70
+          );
+
+          setHeight(
+            profileData.height || 170
+          );
+
+          setGoal(
+            profileData.goal ||
+              "Fogyás"
+          );
+
+          setFitnessLevel(
+            profileData.fitnessLevel ||
+              "Teljesen kezdő"
+          );
+
+          setWeeklyDays(
+            profileData.weeklyDays ||
+              3
+          );
+
+          setWorkoutMinutes(
+            profileData.workoutMinutes ||
+              20
+          );
+
+          setXp(
+            profileData.xp || 0
+          );
+
+          setCoins(
+            profileData.coins ||
+              120
+          );
+
+          setWater(
+            profileData.water || 0
+          );
+
+          setCalories(
+            profileData.calories ||
+              0
+          );
+
+          setProfileCompleted(
+            true
+          );
+
+          setLoading(false);
+        }
+      );
+
+    return () =>
+      unsubscribe();
 
   }, [user]);
 
@@ -357,7 +349,53 @@ export default function FitnessDashboard({ user }) {
 
     setBadges(newBadges);
 
-  }, [water, calories, xp, coins]);
+  }, [
+    water,
+    calories,
+    xp,
+    coins,
+  ]);
+
+  // =========================
+  // COMPLETE WORKOUT
+  // =========================
+
+  ;
+
+      // FIRESTORE UPDATE
+
+      await updateProfile(
+        user.uid,
+        {
+          xp: newXP,
+          coins: newCoins,
+        }
+      );
+    };
+
+  // =========================
+  // WATER TRACKER
+  // =========================
+
+  const addWater =
+    async () => {
+
+      if (!user) {
+        return;
+      }
+
+      const newWater =
+        water + 250;
+
+      setWater(newWater);
+
+      await updateProfile(
+        user.uid,
+        {
+          water: newWater,
+        }
+      );
+    };
 
   // =========================
   // LOADING
@@ -375,7 +413,7 @@ export default function FitnessDashboard({ user }) {
   }
 
   // =========================
-  // APP
+  // UI
   // =========================
 
   return (
@@ -412,7 +450,8 @@ export default function FitnessDashboard({ user }) {
               </div>
 
               <div style={muted}>
-                🪙 {coins} coin • ⚡ {energy}/100
+                🪙 {coins} coin • ⚡{" "}
+                {energy}/100
               </div>
 
             </div>
@@ -468,11 +507,59 @@ export default function FitnessDashboard({ user }) {
 
               </div>
 
+              <button
+                onClick={
+                  completeWorkout
+                }
+                style={actionBtn}
+              >
+                🏆 Edzés kész
+              </button>
+
             </div>
 
           ) : null}
 
         </div>
+
+        {/* WATER */}
+
+        <div style={section}>
+
+          <h2 style={sectionTitle}>
+            💧 Víz tracker
+          </h2>
+
+          <div style={workoutCardNew}>
+
+            <div
+              style={{
+                marginBottom: 12,
+              }}
+            >
+              {water} / {waterGoal} ml
+            </div>
+
+            <button
+              onClick={addWater}
+              style={actionBtn}
+            >
+              +250 ml
+            </button>
+
+          </div>
+
+        </div>
+
+        {/* MESSAGE */}
+
+        {message && (
+
+          <div style={messageBox}>
+            {message}
+          </div>
+
+        )}
 
       </div>
 
@@ -492,13 +579,15 @@ const pageStyle = {
 
   display: "flex",
 
-  justifyContent: "center",
+  justifyContent:
+    "center",
 
   alignItems: "center",
 
   padding: 20,
 
-  fontFamily: "Inter, sans-serif",
+  fontFamily:
+    "Inter, sans-serif",
 };
 
 const loadingStyle = {
@@ -506,7 +595,8 @@ const loadingStyle = {
 
   display: "flex",
 
-  justifyContent: "center",
+  justifyContent:
+    "center",
 
   alignItems: "center",
 
@@ -620,3 +710,38 @@ const exerciseItem = {
   borderBottom:
     "1px solid rgba(255,255,255,0.05)",
 };
+
+const actionBtn = {
+  marginTop: 18,
+
+  width: "100%",
+
+  padding: 14,
+
+  borderRadius: 16,
+
+  border: "none",
+
+  cursor: "pointer",
+
+  fontWeight: "bold",
+
+  color: "white",
+
+  background:
+    "linear-gradient(135deg,#22c55e,#14b8a6)",
+};
+
+const messageBox = {
+  marginTop: 18,
+
+  padding: 14,
+
+  borderRadius: 18,
+
+  background:
+    "rgba(34,197,94,0.12)",
+
+  color: "#bbf7d0",
+};
+```
