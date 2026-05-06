@@ -1,466 +1,828 @@
 import { useEffect, useState } from "react";
+import { onIdTokenChanged } from "firebase/auth";
+import { httpsCallable } from "firebase/functions";
+import { useNavigate } from "react-router-dom";
 
-// FIREBASE
-import { getProfile } from "./profileService";
+import {
+  auth,
+  functions,
+} from "./firebase/config";
 
-export default function FitnessDashboard({ user }) {
+console.log("🔥 MODERN DASHBOARD FUT");
 
-  // =========================
-  // PROFILE STATES
-  // =========================
+export default function FitnessDashboard() {
 
-  const [gender, setGender] =
-    useState("Férfi");
+  console.log("🔥 EZ AZ ÚJ DASHBOARD");
 
-  const [age, setAge] =
-    useState(16);
+  const [user, setUser] =
+    useState(null);
 
-  const [weight, setWeight] =
-    useState(110);
-
-  const [height, setHeight] =
-    useState(192);
-
-  const [goal, setGoal] =
-    useState("Fogyás");
-
-  const [
-    fitnessLevel,
-    setFitnessLevel,
-  ] = useState(
-    "Teljesen kezdő"
-  );
-
-  const [
-    weeklyDays,
-    setWeeklyDays,
-  ] = useState(3);
-
-  const [
-    workoutMinutes,
-    setWorkoutMinutes,
-  ] = useState(20);
-
-  const [
-    profileCompleted,
-    setProfileCompleted,
-  ] = useState(false);
-
-  // =========================
-  // DASHBOARD STATES
-  // =========================
-
-  const [water, setWater] =
-    useState(0);
-
-  const [calories, setCalories] =
-    useState(0);
-
-  const [xp, setXp] =
-    useState(0);
-
-  const [level, setLevel] =
-    useState(1);
-
-  const [coins, setCoins] =
-    useState(120);
-
-  const [energy, setEnergy] =
-    useState(80);
-
-  const [mood, setMood] =
-    useState("😌 Nyugodt");
-
-  const [message, setMessage] =
-    useState("");
-
-  const [badges, setBadges] =
-    useState([]);
-
-  const [dailyClaimed, setDailyClaimed] =
+  const [authReady, setAuthReady] =
     useState(false);
 
-  const [activeTab, setActiveTab] =
-    useState("home");
+  const [workout, setWorkout] =
+    useState(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [completed, setCompleted] =
+    useState([]);
 
-  // =========================
-  // WORKOUT
-  // =========================
+  const [finished, setFinished] =
+    useState(false);
 
-  const [
-    todayWorkout,
-    setTodayWorkout,
-  ] = useState(null);
+  const [newBadges, setNewBadges] =
+    useState([]);
 
-  const [
-    workoutLoading,
-    setWorkoutLoading,
-  ] = useState(false);
+  const navigate = useNavigate();
 
-  // =========================
-  // GOALS
-  // =========================
-
-  const waterGoal = 2000;
-
-  const calorieGoal = 1800;
-
-  // =========================
-  // BMI
-  // =========================
-
-  const bmi = (
-    weight /
-    ((height / 100) *
-      (height / 100))
-  ).toFixed(1);
-
-  // =========================
-  // XP
-  // =========================
-
-  const xpPercent = xp % 100;
-
-  // =========================
-  // GENERATE WORKOUT
-  // =========================
-
-  const generateWorkout = () => {
-
-    if (goal === "Fogyás") {
-
-      return {
-        title:
-          "🔥 Fogyás Edzés",
-
-        exercises: [
-          "20 perc séta",
-          "3x15 guggolás",
-          "3x20 jumping jack",
-          "2x30 mp plank",
-        ],
-
-        xp_reward: 40,
-
-        coin_reward: 20,
-      };
-    }
-
-    if (goal === "Izomépítés") {
-
-      return {
-        title:
-          "💪 Izomépítő Edzés",
-
-        exercises: [
-          "3x10 fekvőtámasz",
-          "3x15 guggolás",
-          "3x12 kitörés",
-          "3x20 mp plank",
-        ],
-
-        xp_reward: 50,
-
-        coin_reward: 25,
-      };
-    }
-
-    return {
-      title:
-        "🌿 Wellness Edzés",
-
-      exercises: [
-        "15 perc séta",
-        "jóga nyújtás",
-        "2x15 guggolás",
-        "légzőgyakorlat",
-      ],
-
-      xp_reward: 30,
-
-      coin_reward: 15,
-    };
-  };
-
-  // =========================
-  // FIREBASE PROFILE LOAD
-  // =========================
+  /* =======================================================
+     🔐 AUTH LISTENER
+  ======================================================= */
 
   useEffect(() => {
 
-    async function loadProfile() {
+    const unsub =
+      onIdTokenChanged(
+        auth,
+        async (u) => {
 
-      if (!user) {
+          console.log(
+            "AUTH CHANGE:",
+            u
+          );
 
-        setLoading(false);
+          if (!u) {
+
+            setUser(null);
+
+            setAuthReady(true);
+
+            return;
+
+          }
+
+          try {
+
+            console.log(
+              "✅ user megvan"
+            );
+
+            await u.getIdToken(true);
+
+            console.log(
+              "🔥 token kész"
+            );
+
+            await new Promise((r) =>
+              setTimeout(r, 1200)
+            );
+
+            setUser(u);
+
+            setAuthReady(true);
+
+          } catch (err) {
+
+            console.error(
+              "❌ TOKEN HIBA:",
+              err
+            );
+
+          }
+
+        }
+      );
+
+    return () => unsub();
+
+  }, []);
+
+  /* =======================================================
+     🔥 FETCH WORKOUT
+  ======================================================= */
+
+  const fetchWorkout = async () => {
+
+    try {
+
+      const currentUser =
+        auth.currentUser;
+
+      if (!currentUser) {
+
+        console.log(
+          "❌ nincs currentUser"
+        );
 
         return;
-      }
 
-      const profileData =
-        await getProfile(user.uid);
+      }
 
       console.log(
-        "🔥 FIREBASE PROFILE:",
-        profileData
+        "✅ currentUser OK"
       );
 
-      if (profileData) {
-
-        setGender(
-          profileData.gender ||
-            "Férfi"
-        );
-
-        setAge(
-          profileData.age || 16
-        );
-
-        setWeight(
-          profileData.weight || 70
-        );
-
-        setHeight(
-          profileData.height || 170
-        );
-
-        setGoal(
-          profileData.goal ||
-            "Fogyás"
-        );
-
-        setFitnessLevel(
-          profileData.fitnessLevel ||
-            "Teljesen kezdő"
-        );
-
-        setWeeklyDays(
-          profileData.weeklyDays || 3
-        );
-
-        setWorkoutMinutes(
-          profileData.workoutMinutes || 20
-        );
-
-        setXp(
-          profileData.xp || 0
-        );
-
-        setCoins(
-          profileData.coins || 120
-        );
-
-        setLevel(
-          profileData.level || 1
-        );
-
-        setWater(
-          profileData.water || 0
-        );
-
-        setCalories(
-          profileData.calories || 0
-        );
-
-        setProfileCompleted(true);
-      }
-
-      setLoading(false);
-    }
-
-    loadProfile();
-
-  }, [user]);
-
-  // =========================
-  // LOAD WORKOUT
-  // =========================
-
-  useEffect(() => {
-
-    if (!profileCompleted)
-      return;
-
-    setWorkoutLoading(true);
-
-    const generatedWorkout =
-      generateWorkout();
-
-    setTodayWorkout(
-      generatedWorkout
-    );
-
-    setWorkoutLoading(false);
-
-  }, [profileCompleted]);
-
-  // =========================
-  // LEVEL
-  // =========================
-
-  useEffect(() => {
-
-    setLevel(
-      Math.floor(xp / 100) + 1
-    );
-
-  }, [xp]);
-
-  // =========================
-  // BADGES
-  // =========================
-
-  useEffect(() => {
-
-    const newBadges = [];
-
-    if (water >= waterGoal) {
-
-      newBadges.push(
-        "💧 Hidratálás Hőse"
+      await currentUser.getIdToken(
+        true
       );
+
+      console.log(
+        "🔥 token refresh kész"
+      );
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, 1200)
+      );
+
+      console.log(
+        "📡 workout hívás..."
+      );
+
+      const fn =
+        httpsCallable(
+          functions,
+          "generateWorkout"
+        );
+
+      const res =
+        await fn({});
+
+      console.log(
+        "🔥 Workout:",
+        res.data
+      );
+
+      setWorkout({
+        ...res.data,
+      });
+
+      setCompleted([]);
+
+      setFinished(false);
+
+      setNewBadges([]);
+
+    } catch (err) {
+
+      console.error(
+        "❌ HIBA:",
+        err
+      );
+
     }
+
+  };
+
+  /* =======================================================
+     🚀 AUTO LOAD
+  ======================================================= */
+
+  useEffect(() => {
 
     if (
-      calories > 0 &&
-      calories <= calorieGoal
+      authReady &&
+      user &&
+      !workout
     ) {
 
-      newBadges.push(
-        "🔥 Egyensúly Mester"
+      console.log(
+        "🚀 indítjuk az edzést"
       );
+
+      fetchWorkout();
+
     }
 
-    if (xp >= 100) {
+  }, [
+    authReady,
+    user,
+  ]);
 
-      newBadges.push(
-        "⭐ XP Újonc"
-      );
-    }
+  /* =======================================================
+     ✅ TOGGLE
+  ======================================================= */
 
-    if (xp >= 250) {
+  const toggle = (i) => {
 
-      newBadges.push(
-        "🌿 Wellness Harcos"
-      );
-    }
+    setCompleted((prev) =>
 
-    if (coins >= 200) {
+      prev.includes(i)
+        ? prev.filter(
+            (x) => x !== i
+          )
+        : [...prev, i]
 
-      newBadges.push(
-        "🪙 Coin Gyűjtő"
-      );
-    }
-
-    setBadges(newBadges);
-
-  }, [water, calories, xp, coins]);
-
-  // =========================
-  // LOADING
-  // =========================
-
-  if (loading) {
-
-    return (
-      <div style={loadingStyle}>
-        <h1>
-          ⏳ Betöltés...
-        </h1>
-      </div>
     );
-  }
 
-  // =========================
-  // APP
-  // =========================
+  };
+
+  /* =======================================================
+     🎉 COMPLETE WORKOUT
+  ======================================================= */
+
+  useEffect(() => {
+
+    const complete =
+      async () => {
+
+        if (
+          workout &&
+          completed.length ===
+            workout.exercises.length &&
+          !finished
+        ) {
+
+          setFinished(true);
+
+          try {
+
+            const currentUser =
+              auth.currentUser;
+
+            if (!currentUser) {
+
+              return;
+
+            }
+
+            await currentUser.getIdToken(
+              true
+            );
+
+            await new Promise((r) =>
+              setTimeout(r, 1000)
+            );
+
+            const fn =
+              httpsCallable(
+                functions,
+                "completeWorkout"
+              );
+
+            const res =
+              await fn({
+                xp:
+                  workout.xp_reward,
+                isBoss:
+                  workout.isBoss,
+              });
+
+            console.log(
+              "🏆 XP siker:",
+              res.data
+            );
+
+            setNewBadges(
+              res.data.newBadges || []
+            );
+
+          } catch (err) {
+
+            console.error(
+              "❌ XP hiba:",
+              err
+            );
+
+          }
+
+        }
+
+      };
+
+    complete();
+
+  }, [completed]);
+
+  /* =======================================================
+     🎨 UI
+  ======================================================= */
 
   return (
-    <div style={pageStyle}>
 
-      <div style={phoneFrame}>
+    <div
+      style={{
+        minHeight: "100vh",
+        background:
+          "linear-gradient(180deg,#020617 0%,#07111f 100%)",
+        display: "flex",
+        justifyContent: "center",
+      }}
+    >
 
-        <h1 style={title}>
-          🔥 Homefit
-        </h1>
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "430px",
+          padding: "18px",
+          paddingBottom: "110px",
+          color: "white",
+        }}
+      >
 
-        {/* HERO */}
+        {/* HEADER */}
 
-        <div style={heroCardNew}>
+        <div
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 20,
+            paddingBottom: 16,
+            paddingTop: 8,
+            background:
+              "linear-gradient(180deg,#020617 0%,rgba(2,6,23,0.92) 100%)",
+            backdropFilter:
+              "blur(12px)",
+          }}
+        >
 
-          <div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent:
+                "space-between",
+              alignItems: "center",
+            }}
+          >
 
-            <div style={muted}>
-              🔥 Aktív streak
-            </div>
+            <div>
 
-            <div style={bigNumber}>
-              {level}. szint
+              <div
+                style={{
+                  fontSize: 14,
+                  color: "#94a3b8",
+                  marginBottom: 4,
+                }}
+              >
+                🔥 Homefit
+              </div>
+
+              <div
+                style={{
+                  fontSize: 28,
+                  fontWeight: 900,
+                }}
+              >
+                Dashboard
+              </div>
+
             </div>
 
             <div
               style={{
-                marginTop: 12,
+                width: 54,
+                height: 54,
+                borderRadius: 18,
+                background:
+                  "linear-gradient(135deg,#22c55e,#14b8a6)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 24,
+                boxShadow:
+                  "0 10px 30px rgba(34,197,94,0.25)",
               }}
             >
-
-              <div style={xpText}>
-                ⭐ {xp} XP
-              </div>
-
-              <div style={muted}>
-                🪙 {coins} coin • ⚡ {energy}/100
-              </div>
-
+              ⚡
             </div>
 
-          </div>
-
-          <div style={avatar}>
-            🧘
           </div>
 
         </div>
 
+        {/* LOADING */}
+
+        {!workout && (
+
+          <div
+            style={{
+              marginTop: 30,
+              textAlign: "center",
+              opacity: 0.8,
+            }}
+          >
+            Betöltés...
+          </div>
+
+        )}
+
         {/* WORKOUT */}
 
-        <div style={section}>
+        {workout && (
 
-          <h2 style={sectionTitle}>
-            🔥 Mai edzés
-          </h2>
+          <>
 
-          {workoutLoading ? (
+            {/* =======================================================
+                🔥 HERO CARD
+            ======================================================= */}
 
-            <div style={workoutCardNew}>
-              Betöltés...
-            </div>
+            <div
+              style={{
+                marginTop: 10,
+                borderRadius: 32,
+                padding: 26,
+                background:
+                  "linear-gradient(135deg,#16a34a 0%,#065f46 55%,#022c22 100%)",
+                position: "relative",
+                overflow: "hidden",
+                boxShadow:
+                  "0 20px 50px rgba(34,197,94,0.18)",
+              }}
+            >
 
-          ) : todayWorkout ? (
-
-            <div style={workoutCardNew}>
-
-              <h3>
-                {todayWorkout.title}
-              </h3>
+              {/* GLOW */}
 
               <div
                 style={{
-                  marginTop: 14,
+                  position: "absolute",
+                  width: 220,
+                  height: 220,
+                  borderRadius: "50%",
+                  background:
+                    "rgba(255,255,255,0.08)",
+                  top: -80,
+                  right: -80,
+                  filter: "blur(40px)",
+                }}
+              />
+
+              {/* TOP */}
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent:
+                    "space-between",
+                  alignItems: "center",
+                  marginBottom: 26,
+                  position: "relative",
+                  zIndex: 2,
                 }}
               >
 
-                {todayWorkout.exercises.map(
-                  (exercise, i) => (
+                <div>
+
+                  <div
+                    style={{
+                      fontSize: 14,
+                      opacity: 0.8,
+                      marginBottom: 6,
+                    }}
+                  >
+                    🔥 Mai státusz
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: 34,
+                      fontWeight: 900,
+                      lineHeight: 1,
+                    }}
+                  >
+                    Level {workout.level}
+                  </div>
+
+                </div>
+
+                <div
+                  style={{
+                    background:
+                      "rgba(255,255,255,0.12)",
+                    padding:
+                      "12px 18px",
+                    borderRadius: 20,
+                    backdropFilter:
+                      "blur(10px)",
+                    fontWeight: 700,
+                  }}
+                >
+                  🔥 {workout.streak} streak
+                </div>
+
+              </div>
+
+              {/* XP BAR */}
+
+              <div
+                style={{
+                  position: "relative",
+                  zIndex: 2,
+                }}
+              >
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent:
+                      "space-between",
+                    marginBottom: 10,
+                    fontSize: 14,
+                    opacity: 0.9,
+                  }}
+                >
+                  <span>
+                    XP progress
+                  </span>
+
+                  <span>
+                    {Math.min(
+                      workout.level * 20,
+                      100
+                    )}
+                    %
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    height: 16,
+                    borderRadius: 999,
+                    background:
+                      "rgba(255,255,255,0.12)",
+                    overflow: "hidden",
+                  }}
+                >
+
+                  <div
+                    style={{
+                      width: `${
+                        Math.min(
+                          workout.level * 20,
+                          100
+                        )
+                      }%`,
+                      height: "100%",
+                      borderRadius: 999,
+                      background:
+                        "linear-gradient(90deg,#bbf7d0,#22c55e)",
+                      boxShadow:
+                        "0 0 20px rgba(255,255,255,0.3)",
+                    }}
+                  />
+
+                </div>
+
+              </div>
+
+              {/* FOOTER */}
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "1fr 1fr",
+                  gap: 14,
+                  marginTop: 22,
+                  position: "relative",
+                  zIndex: 2,
+                }}
+              >
+
+                <div
+                  style={{
+                    background:
+                      "rgba(255,255,255,0.08)",
+                    borderRadius: 20,
+                    padding: 18,
+                  }}
+                >
+
+                  <div
+                    style={{
+                      opacity: 0.7,
+                      marginBottom: 6,
+                      fontSize: 13,
+                    }}
+                  >
+                    Mai jutalom
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: 26,
+                      fontWeight: 900,
+                    }}
+                  >
+                    +{workout.xp_reward} XP
+                  </div>
+
+                </div>
+
+                <div
+                  style={{
+                    background:
+                      "rgba(255,255,255,0.08)",
+                    borderRadius: 20,
+                    padding: 18,
+                  }}
+                >
+
+                  <div
+                    style={{
+                      opacity: 0.7,
+                      marginBottom: 6,
+                      fontSize: 13,
+                    }}
+                  >
+                    Edzés típus
+                  </div>
+
+                  <div
+                    style={{
+                      fontSize: 24,
+                      fontWeight: 800,
+                    }}
+                  >
+                    {workout.isBoss
+                      ? "💀 Boss"
+                      : "🔥 Normál"}
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* BOSS ALERT */}
+
+            {workout.isBoss && (
+
+              <div
+                style={{
+                  marginTop: 18,
+                  padding: 18,
+                  borderRadius: 24,
+                  background:
+                    "linear-gradient(135deg,#ef4444,#7f1d1d)",
+                  textAlign: "center",
+                  fontWeight: 900,
+                  fontSize: 20,
+                  boxShadow:
+                    "0 15px 40px rgba(239,68,68,0.25)",
+                }}
+              >
+                💀 BOSS EDZÉS
+              </div>
+
+            )}
+
+            {/* WORKOUT CARD */}
+
+            <div
+              style={{
+                marginTop: 18,
+                padding: 22,
+                borderRadius: 28,
+                background:
+                  "rgba(30,41,59,0.92)",
+                border:
+                  "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+
+              <h2
+                style={{
+                  marginTop: 0,
+                  marginBottom: 24,
+                  fontSize: 28,
+                }}
+              >
+                {workout.title}
+              </h2>
+
+              {workout.exercises.map(
+                (ex, i) => {
+
+                  const done =
+                    completed.includes(i);
+
+                  return (
 
                     <div
                       key={i}
-                      style={exerciseItem}
+                      onClick={() =>
+                        toggle(i)
+                      }
+                      style={{
+                        padding:
+                          "18px",
+                        cursor:
+                          "pointer",
+                        fontSize:
+                          "17px",
+                        background:
+                          done
+                            ? "linear-gradient(135deg,#16a34a,#166534)"
+                            : "rgba(255,255,255,0.03)",
+                        borderRadius:
+                          20,
+                        marginBottom: 14,
+                        transition:
+                          "0.2s",
+                        textDecoration:
+                          done
+                            ? "line-through"
+                            : "none",
+                        border:
+                          done
+                            ? "1px solid rgba(255,255,255,0.08)"
+                            : "1px solid rgba(255,255,255,0.04)",
+                        display: "flex",
+                        alignItems:
+                          "center",
+                        gap: 14,
+                        fontWeight:
+                          done
+                            ? 700
+                            : 500,
+                      }}
                     >
-                      ✅ {exercise}
+
+                      <div
+                        style={{
+                          fontSize: 24,
+                        }}
+                      >
+                        {done
+                          ? "✅"
+                          : "⬜"}
+                      </div>
+
+                      <div>
+                        {ex}
+                      </div>
+
+                    </div>
+
+                  );
+
+                }
+              )}
+
+            </div>
+
+            {/* FINISHED */}
+
+            {finished && (
+
+              <div
+                style={{
+                  marginTop: 18,
+                  padding: 24,
+                  borderRadius: 28,
+                  background:
+                    "linear-gradient(135deg,#22c55e,#16a34a)",
+                  textAlign: "center",
+                  fontWeight: 900,
+                  fontSize: 26,
+                  boxShadow:
+                    "0 15px 40px rgba(34,197,94,0.25)",
+                }}
+              >
+                🎉 Kész!
+                <br />
+                +{workout.xp_reward}
+                XP
+              </div>
+
+            )}
+
+            {/* BADGES */}
+
+            {newBadges.length > 0 && (
+
+              <div
+                style={{
+                  marginTop: 18,
+                  padding: 24,
+                  borderRadius: 28,
+                  background:
+                    "linear-gradient(135deg,#facc15,#eab308)",
+                  color: "black",
+                  textAlign: "center",
+                }}
+              >
+
+                <div
+                  style={{
+                    fontWeight: 900,
+                    fontSize: 24,
+                    marginBottom: 14,
+                  }}
+                >
+                  🏆 Új badge!
+                </div>
+
+                {newBadges.map(
+                  (b, i) => (
+
+                    <div
+                      key={i}
+                      style={{
+                        marginBottom: 10,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {b}
                     </div>
 
                   )
@@ -468,155 +830,87 @@ export default function FitnessDashboard({ user }) {
 
               </div>
 
-            </div>
+            )}
 
-          ) : null}
+            {/* NEW WORKOUT BUTTON */}
 
+            <button
+              onClick={fetchWorkout}
+              style={{
+                marginTop: 22,
+                width: "100%",
+                padding: "20px",
+                borderRadius: 22,
+                border: "none",
+                background:
+                  "linear-gradient(135deg,#22c55e,#16a34a)",
+                color: "white",
+                fontWeight: 900,
+                fontSize: "18px",
+                cursor: "pointer",
+                boxShadow:
+                  "0 15px 40px rgba(34,197,94,0.18)",
+              }}
+            >
+              🔁 Új edzés
+            </button>
+
+          </>
+
+        )}
+
+      </div>
+
+      {/* BOTTOM NAV */}
+
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          width: "100%",
+          maxWidth: "430px",
+          background:
+            "rgba(2,6,23,0.92)",
+          backdropFilter:
+            "blur(12px)",
+          borderTop:
+            "1px solid rgba(255,255,255,0.06)",
+          display: "flex",
+          justifyContent:
+            "space-around",
+          padding: "16px 0",
+          color: "white",
+        }}
+      >
+
+        <div
+          onClick={() =>
+            navigate("/dashboard")
+          }
+          style={{
+            cursor: "pointer",
+            fontSize: 28,
+          }}
+        >
+          🏠
+        </div>
+
+        <div
+          onClick={() =>
+            navigate("/badges")
+          }
+          style={{
+            cursor: "pointer",
+            fontSize: 28,
+          }}
+        >
+          🏆
         </div>
 
       </div>
 
     </div>
+
   );
+
 }
-
-// =========================
-// STYLES
-// =========================
-
-const pageStyle = {
-  minHeight: "100vh",
-
-  background:
-    "radial-gradient(circle at top left, #07111f, #020617 40%, #000000)",
-
-  display: "flex",
-
-  justifyContent: "center",
-
-  alignItems: "center",
-
-  padding: 20,
-
-  fontFamily: "Inter, sans-serif",
-};
-
-const loadingStyle = {
-  minHeight: "100vh",
-
-  display: "flex",
-
-  justifyContent: "center",
-
-  alignItems: "center",
-
-  background: "#020617",
-
-  color: "white",
-};
-
-const phoneFrame = {
-  width: "100%",
-
-  maxWidth: 390,
-
-  background:
-    "rgba(255,255,255,0.06)",
-
-  borderRadius: 34,
-
-  padding: 20,
-
-  backdropFilter:
-    "blur(18px)",
-
-  color: "white",
-
-  boxShadow:
-    "0 0 50px rgba(0,0,0,0.4)",
-};
-
-const title = {
-  margin: 0,
-
-  fontSize: 28,
-};
-
-const heroCardNew = {
-  background:
-    "linear-gradient(135deg, rgba(34,197,94,0.14), rgba(20,184,166,0.10))",
-
-  borderRadius: 26,
-
-  padding: 22,
-
-  display: "flex",
-
-  justifyContent:
-    "space-between",
-
-  alignItems: "center",
-
-  marginTop: 10,
-};
-
-const bigNumber = {
-  fontSize: 34,
-
-  fontWeight: "bold",
-};
-
-const xpText = {
-  fontSize: 18,
-
-  fontWeight: 600,
-};
-
-const muted = {
-  opacity: 0.65,
-
-  fontSize: 13,
-};
-
-const avatar = {
-  width: 72,
-
-  height: 72,
-
-  borderRadius: "50%",
-
-  background:
-    "linear-gradient(135deg,#22c55e,#06b6d4)",
-
-  display: "flex",
-
-  alignItems: "center",
-
-  justifyContent: "center",
-
-  fontSize: 32,
-};
-
-const section = {
-  marginTop: 22,
-};
-
-const sectionTitle = {
-  marginBottom: 12,
-};
-
-const workoutCardNew = {
-  background:
-    "rgba(255,255,255,0.05)",
-
-  padding: 18,
-
-  borderRadius: 22,
-};
-
-const exerciseItem = {
-  padding: "8px 0",
-
-  borderBottom:
-    "1px solid rgba(255,255,255,0.05)",
-};

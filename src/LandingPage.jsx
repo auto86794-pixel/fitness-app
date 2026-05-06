@@ -1,8 +1,170 @@
 import { useEffect, useState } from "react";
-import supabase from "./supabaseClient";
-import FitnessDashboard from "./FitnessDashboard";
 
-function LandingPage() {
+console.log("🔥 MODERN LANDING FUT");
+
+import {
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
+
+import FitnessDashboard from "./FitnessDashboard";
+import BadgeScreen from "./BadgeScreen";
+
+// FIREBASE AUTH
+import {
+  onAuthStateChanged,
+} from "firebase/auth";
+
+import { auth } from "./firebase/config";
+
+// PROFILE CREATE
+import {
+  createUserProfile,
+} from "./createUserProfile";
+
+// ANONYMOUS LOGIN
+import {
+  anonymousLogin,
+} from "./anonymousLogin";
+
+// SAVE QUESTIONNAIRE
+import {
+  saveQuestionnaire,
+} from "./saveQuestionnaire";
+
+/* =======================================================
+   🧊 GLASS CARD
+======================================================= */
+
+function GlassCard({
+  children,
+  style,
+  id,
+}) {
+  return (
+    <div
+      id={id}
+      style={{
+        background:
+          "rgba(255,255,255,0.03)",
+        border:
+          "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 28,
+        backdropFilter:
+          "blur(12px)",
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* =======================================================
+   🏠 LANDING PAGE
+======================================================= */
+
+function LandingPage({ user }) {
+
+  const navigate = useNavigate();
+
+  const [width, setWidth] =
+    useState(window.innerWidth);
+
+  const [gender, setGender] =
+    useState("Nő");
+
+  const [age, setAge] =
+    useState(29);
+
+  const [weight, setWeight] =
+    useState(78);
+
+  const [height, setHeight] =
+    useState(168);
+
+  const [goal, setGoal] =
+    useState("Fogyás");
+
+  const [weeklyDays, setWeeklyDays] =
+    useState(3);
+
+  const [workoutMinutes, setWorkoutMinutes] =
+    useState(20);
+
+  /* ======================
+     📱 RESIZE
+  ====================== */
+
+  useEffect(() => {
+
+    const onResize = () =>
+      setWidth(window.innerWidth);
+
+    window.addEventListener(
+      "resize",
+      onResize
+    );
+
+    return () =>
+      window.removeEventListener(
+        "resize",
+        onResize
+      );
+
+  }, []);
+
+  const isMobile = width < 900;
+
+  /* ======================
+     🚀 OPEN DASHBOARD
+  ====================== */
+
+  async function openDashboard() {
+
+    try {
+
+      console.log("🔥 dashboard indítás");
+
+      if (user) {
+
+        await saveQuestionnaire({
+          goal,
+          level: "Kezdő",
+          duration: workoutMinutes,
+          days: weeklyDays,
+          gender,
+          age,
+          weight,
+          height,
+        });
+
+        console.log(
+          "✅ questionnaire mentve"
+        );
+
+      }
+
+      navigate("/dashboard");
+
+    } catch (err) {
+
+      console.error(
+        "❌ openDashboard hiba:",
+        err
+      );
+
+      navigate("/dashboard");
+
+    }
+
+  }
+
+  /* ======================
+     🎨 UI
+  ====================== */
+
   return (
     <div
       style={{
@@ -10,27 +172,32 @@ function LandingPage() {
         background:
           "linear-gradient(180deg, #030712 0%, #07111f 38%, #08121e 100%)",
         color: "white",
-        fontFamily: "Inter, sans-serif",
-        padding: "40px 20px",
+        padding:
+          isMobile ? 16 : 24,
+        fontFamily:
+          "Inter, sans-serif",
       }}
     >
       <div
         style={{
-          maxWidth: 1200,
+          maxWidth: 1280,
           margin: "0 auto",
         }}
       >
-        {/* TOPBAR */}
-        <div
+
+        {/* ======================
+            TOPBAR
+        ====================== */}
+
+        <GlassCard
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "16px 24px",
-            border: "1px solid rgba(255,255,255,0.08)",
-            borderRadius: 999,
-            background: "rgba(255,255,255,0.03)",
+            padding:
+              "16px 24px",
             marginBottom: 30,
+            display: "flex",
+            justifyContent:
+              "space-between",
+            alignItems: "center",
           }}
         >
           <div
@@ -39,204 +206,295 @@ function LandingPage() {
               alignItems: "center",
               gap: 12,
               fontWeight: 800,
-              fontSize: 22,
+              fontSize: 24,
             }}
           >
             ⚡ Homefit
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: 20,
-              color: "#94a3b8",
-            }}
-          >
-            <span>Miért működik</span>
-            <span>Edzésterv</span>
-            <span>Tesztelés</span>
-          </div>
-        </div>
+          {!isMobile && (
+            <div
+              style={{
+                display: "flex",
+                gap: 24,
+                color: "#94a3b8",
+                fontWeight: 600,
+              }}
+            >
+              <span>
+                Miért működik
+              </span>
 
-        {/* HERO */}
+              <span>
+                Edzésterv
+              </span>
+
+              <span>
+                Tesztelés
+              </span>
+            </div>
+          )}
+        </GlassCard>
+
+        {/* ======================
+            HERO GRID
+        ====================== */}
+
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1.1fr 0.9fr",
+            gridTemplateColumns:
+              isMobile
+                ? "1fr"
+                : "1.1fr 0.9fr",
             gap: 24,
+            marginBottom: 40,
           }}
         >
-          {/* LEFT */}
-          <div
+
+          {/* ======================
+              LEFT HERO
+          ====================== */}
+
+          <GlassCard
             style={{
-              background: "rgba(255,255,255,0.04)",
-              borderRadius: 32,
-              padding: 40,
-              border: "1px solid rgba(255,255,255,0.08)",
+              padding:
+                isMobile
+                  ? 28
+                  : 42,
             }}
           >
+
             <div
               style={{
-                display: "inline-block",
-                padding: "10px 16px",
+                display:
+                  "inline-block",
+                padding:
+                  "10px 18px",
                 borderRadius: 999,
-                background: "rgba(34,197,94,0.15)",
+                background:
+                  "rgba(34,197,94,0.15)",
                 color: "#bbf7d0",
-                marginBottom: 24,
                 fontWeight: 700,
+                marginBottom: 24,
               }}
             >
-              🏠 Otthoni edzés · kezdőknek · fogyási célra
+              🏠 Otthoni edzés ·
+              kezdőknek ·
+              fogyáshoz
             </div>
 
             <h1
               style={{
-                fontSize: 72,
-                lineHeight: 1,
-                marginBottom: 24,
+                fontSize:
+                  isMobile
+                    ? 54
+                    : 82,
+                lineHeight: 0.95,
+                margin:
+                  "0 0 28px 0",
                 fontWeight: 900,
-                letterSpacing: "-3px",
+                letterSpacing:
+                  "-4px",
               }}
             >
-              Személyre szabott edzésterv 1 perc alatt
+              Személyre
+              szabott
+              <br />
+              otthoni
+              <br />
+              edzésterv
             </h1>
 
             <p
               style={{
                 color: "#94a3b8",
-                fontSize: 18,
-                lineHeight: 1.8,
+                fontSize: 22,
+                lineHeight: 1.7,
                 maxWidth: 650,
               }}
             >
-              Add meg az alapadataid, és kapsz egy egyszerű, követhető,
-              otthon végezhető heti edzéstervet. Nincs konditerem, nincs
-              túlbonyolítás — csak egy tiszta kezdőpont.
+              Add meg az
+              alapadataid,
+              és kapsz egy
+              egyszerű,
+              követhető
+              heti tervet,
+              amit valóban
+              végig tudsz
+              csinálni
+              otthon.
             </p>
+
+            {/* BUTTONS */}
 
             <div
               style={{
                 display: "flex",
-                gap: 14,
-                marginTop: 30,
+                gap: 16,
+                marginTop: 34,
                 flexWrap: "wrap",
               }}
             >
+
               <button
+                onClick={
+                  openDashboard
+                }
                 style={{
-                  padding: "16px 24px",
+                  padding:
+                    "18px 28px",
                   borderRadius: 18,
                   border: "none",
                   background:
                     "linear-gradient(135deg,#22c55e,#14b8a6)",
                   color: "white",
                   fontWeight: 800,
+                  fontSize: 18,
                   cursor: "pointer",
-                  fontSize: 16,
+                  boxShadow:
+                    "0 10px 30px rgba(34,197,94,0.25)",
                 }}
               >
-                🔥 Edzéstervem elkészítése
+                🔥 Edzésterv
+                készítése
               </button>
 
               <button
                 style={{
-                  padding: "16px 24px",
+                  padding:
+                    "18px 28px",
                   borderRadius: 18,
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  background: "rgba(255,255,255,0.03)",
+                  border:
+                    "1px solid rgba(255,255,255,0.08)",
+                  background:
+                    "rgba(255,255,255,0.03)",
                   color: "white",
                   fontWeight: 700,
+                  fontSize: 18,
                   cursor: "pointer",
-                  fontSize: 16,
                 }}
               >
-                Demó kipróbálása
+                Demó
+                kipróbálása
               </button>
+
             </div>
 
             {/* STATS */}
+
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(3,1fr)",
-                gap: 14,
-                marginTop: 34,
+                gridTemplateColumns:
+                  isMobile
+                    ? "1fr"
+                    : "repeat(3,1fr)",
+                gap: 16,
+                marginTop: 40,
               }}
             >
               {[
-                ["1 perc", "ennyi idő a kitöltés"],
-                ["15–30 perc", "rövid edzésblokkok"],
-                ["2–5 nap", "rugalmas heti terv"],
-              ].map((item, i) => (
-                <div
-                  key={i}
-                  style={{
-                    background: "rgba(255,255,255,0.03)",
-                    padding: 18,
-                    borderRadius: 22,
-                    border: "1px solid rgba(255,255,255,0.06)",
-                  }}
-                >
+                [
+                  "1 perc",
+                  "ennyi idő alatt elkészül"
+                ],
+                [
+                  "15–30 perc",
+                  "rövid blokkok"
+                ],
+                [
+                  "2–5 nap",
+                  "rugalmas rendszer"
+                ],
+              ].map(
+                (item, i) => (
                   <div
+                    key={i}
                     style={{
-                      fontSize: 28,
-                      fontWeight: 800,
-                      marginBottom: 8,
+                      background:
+                        "rgba(255,255,255,0.03)",
+                      border:
+                        "1px solid rgba(255,255,255,0.06)",
+                      borderRadius: 24,
+                      padding: 24,
                     }}
                   >
-                    {item[0]}
-                  </div>
+                    <div
+                      style={{
+                        fontSize: 36,
+                        fontWeight: 900,
+                        marginBottom: 10,
+                      }}
+                    >
+                      {item[0]}
+                    </div>
 
-                  <div
-                    style={{
-                      color: "#94a3b8",
-                      fontSize: 14,
-                    }}
-                  >
-                    {item[1]}
+                    <div
+                      style={{
+                        color:
+                          "#94a3b8",
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {item[1]}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              )}
             </div>
-          </div>
 
-          {/* RIGHT */}
-          <div
+          </GlassCard>
+
+          {/* ======================
+              RIGHT PREVIEW
+          ====================== */}
+
+          <GlassCard
             style={{
-              background:
-                "linear-gradient(180deg, rgba(15,23,42,0.95), rgba(9,17,31,0.95))",
-              borderRadius: 32,
               padding: 28,
-              border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
+
             <div
               style={{
                 display: "flex",
-                justifyContent: "space-between",
+                justifyContent:
+                  "space-between",
+                alignItems: "center",
                 marginBottom: 20,
-                color: "#94a3b8",
               }}
             >
-              <span>App előnézet</span>
+              <div
+                style={{
+                  color:
+                    "#94a3b8",
+                }}
+              >
+                App előnézet
+              </div>
 
               <div
                 style={{
-                  background: "rgba(34,197,94,0.15)",
-                  color: "#bbf7d0",
-                  padding: "8px 12px",
+                  padding:
+                    "8px 14px",
                   borderRadius: 999,
-                  fontSize: 12,
+                  background:
+                    "rgba(34,197,94,0.15)",
+                  color:
+                    "#bbf7d0",
+                  fontSize: 13,
                   fontWeight: 700,
                 }}
               >
-                Kezdőbarát rendszer
+                Kezdőbarát
               </div>
             </div>
 
             {[
               {
-                title: "1. nap - teljes test",
+                title:
+                  "1. nap • teljes test",
                 list: [
                   "Guggolás",
                   "Térdelő fekvőtámasz",
@@ -244,7 +502,8 @@ function LandingPage() {
                 ],
               },
               {
-                title: "2. nap - teljes test",
+                title:
+                  "2. nap • teljes test",
                 list: [
                   "Glute bridge",
                   "Helyben járás",
@@ -252,76 +511,400 @@ function LandingPage() {
                 ],
               },
               {
-                title: "3. nap - teljes test",
+                title:
+                  "3. nap • teljes test",
                 list: [
                   "Falnál ülés",
                   "Hasprés",
                   "Térdemelés helyben",
                 ],
               },
-            ].map((day, i) => (
-              <div
-                key={i}
-                style={{
-                  background: "rgba(255,255,255,0.03)",
-                  border: "1px solid rgba(255,255,255,0.06)",
-                  borderRadius: 24,
-                  padding: 20,
-                  marginBottom: 16,
-                }}
-              >
+            ].map(
+              (day, i) => (
                 <div
+                  key={i}
                   style={{
-                    fontWeight: 800,
-                    marginBottom: 12,
-                    fontSize: 20,
+                    background:
+                      "rgba(255,255,255,0.03)",
+                    border:
+                      "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: 24,
+                    padding: 24,
+                    marginBottom: 18,
                   }}
                 >
-                  {day.title}
-                </div>
+                  <div
+                    style={{
+                      fontSize: 28,
+                      fontWeight: 800,
+                      marginBottom: 18,
+                    }}
+                  >
+                    {day.title}
+                  </div>
 
-                <ul
-                  style={{
-                    color: "#94a3b8",
-                    lineHeight: 2,
-                    paddingLeft: 20,
-                  }}
-                >
-                  {day.list.map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+                  <ul
+                    style={{
+                      color:
+                        "#94a3b8",
+                      lineHeight: 2,
+                      paddingLeft: 20,
+                      fontSize: 18,
+                    }}
+                  >
+                    {day.list.map(
+                      (
+                        item,
+                        idx
+                      ) => (
+                        <li
+                          key={
+                            idx
+                          }
+                        >
+                          {item}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              )
+            )}
+
+          </GlassCard>
+
         </div>
+
+        {/* ======================
+            QUESTIONNAIRE
+        ====================== */}
+
+        <GlassCard
+          style={{
+            padding:
+              isMobile
+                ? 24
+                : 40,
+            marginBottom: 40,
+          }}
+        >
+
+          <h2
+            style={{
+              fontSize:
+                isMobile
+                  ? 48
+                  : 72,
+              marginBottom: 20,
+            }}
+          >
+            Kérdőív
+          </h2>
+
+          <p
+            style={{
+              color: "#94a3b8",
+              lineHeight: 1.8,
+              marginBottom: 30,
+              fontSize: 18,
+            }}
+          >
+            Add meg az
+            alapadataid,
+            és elkészítjük
+            a személyre
+            szabott heti
+            terved.
+          </p>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                isMobile
+                  ? "1fr"
+                  : "1fr 1fr",
+              gap: 20,
+            }}
+          >
+
+            <div>
+              <label>Nem</label>
+
+              <select
+                value={gender}
+                onChange={(e) =>
+                  setGender(
+                    e.target.value
+                  )
+                }
+                style={inputStyle}
+              >
+                <option>
+                  Nő
+                </option>
+
+                <option>
+                  Férfi
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label>
+                Életkor
+              </label>
+
+              <input
+                value={age}
+                onChange={(e) =>
+                  setAge(
+                    e.target.value
+                  )
+                }
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label>
+                Testsúly
+              </label>
+
+              <input
+                value={weight}
+                onChange={(e) =>
+                  setWeight(
+                    e.target.value
+                  )
+                }
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label>
+                Magasság
+              </label>
+
+              <input
+                value={height}
+                onChange={(e) =>
+                  setHeight(
+                    e.target.value
+                  )
+                }
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label>Cél</label>
+
+              <select
+                value={goal}
+                onChange={(e) =>
+                  setGoal(
+                    e.target.value
+                  )
+                }
+                style={inputStyle}
+              >
+                <option>
+                  Fogyás
+                </option>
+
+                <option>
+                  Erősödés
+                </option>
+
+                <option>
+                  Állóképesség
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label>
+                Heti napok
+              </label>
+
+              <input
+                value={
+                  weeklyDays
+                }
+                onChange={(e) =>
+                  setWeeklyDays(
+                    e.target.value
+                  )
+                }
+                style={inputStyle}
+              />
+            </div>
+
+          </div>
+
+          <button
+            onClick={
+              openDashboard
+            }
+            style={{
+              marginTop: 30,
+              width: "100%",
+              padding:
+                "20px",
+              borderRadius: 22,
+              border: "none",
+              background:
+                "linear-gradient(135deg,#22c55e,#14b8a6)",
+              color: "white",
+              fontWeight: 900,
+              fontSize: 20,
+              cursor: "pointer",
+              boxShadow:
+                "0 10px 30px rgba(34,197,94,0.25)",
+            }}
+          >
+            🔥 Edzésterv
+            generálása
+          </button>
+
+        </GlassCard>
+
       </div>
     </div>
   );
 }
 
-export default function App() {
-  const [session, setSession] = useState(null);
+/* =======================================================
+   🎨 INPUT STYLE
+======================================================= */
+
+const inputStyle = {
+  width: "100%",
+  padding: "18px",
+  marginTop: 8,
+  borderRadius: 18,
+  border:
+    "1px solid rgba(255,255,255,0.08)",
+  background:
+    "rgba(255,255,255,0.03)",
+  color: "white",
+  fontSize: 16,
+  outline: "none",
+  boxSizing: "border-box",
+};
+
+/* =======================================================
+   🚀 APP
+======================================================= */
+
+function App() {
+
+  const [user, setUser] =
+    useState(null);
+
+  /* ======================
+     🔐 ANON LOGIN
+  ====================== */
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-    });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-      }
-    );
+    anonymousLogin();
 
-    return () => subscription.unsubscribe();
   }, []);
 
-  if (!session) {
-    return <LandingPage />;
-  }
+  /* ======================
+     👤 AUTH
+  ====================== */
 
-  return <FitnessDashboard />;
+  useEffect(() => {
+
+    const unsubscribe =
+      onAuthStateChanged(
+        auth,
+        async (
+          currentUser
+        ) => {
+
+          console.log(
+            "🔥 AUTH USER:",
+            currentUser
+          );
+
+          setUser(
+            currentUser
+          );
+
+          if (
+            currentUser
+          ) {
+
+            try {
+
+              await createUserProfile(
+                currentUser
+              );
+
+              console.log(
+                "✅ profile kész"
+              );
+
+            } catch (
+              err
+            ) {
+
+              console.error(
+                "❌ profile hiba:",
+                err
+              );
+
+            }
+
+          }
+
+        }
+      );
+
+    return () =>
+      unsubscribe();
+
+  }, []);
+
+  /* ======================
+     🛣️ ROUTES
+  ====================== */
+
+  return (
+    <Routes>
+
+      <Route
+        path="/"
+        element={
+          <LandingPage
+            user={user}
+          />
+        }
+      />
+
+      <Route
+        path="/dashboard"
+        element={
+          <FitnessDashboard
+            user={user}
+          />
+        }
+      />
+
+      <Route
+        path="/badges"
+        element={
+          <BadgeScreen />
+        }
+      />
+
+    </Routes>
+  );
 }
+
+export default App;
