@@ -40,15 +40,17 @@ import {
 function GlassCard({
   children,
   style,
+  id,
 }) {
   return (
     <div
+      id={id}
       style={{
         background:
           "rgba(255,255,255,0.03)",
         border:
           "1px solid rgba(255,255,255,0.08)",
-        borderRadius: 32,
+        borderRadius: 28,
         backdropFilter:
           "blur(12px)",
         ...style,
@@ -91,6 +93,37 @@ function LandingPage({ user }) {
   const [workoutMinutes, setWorkoutMinutes] =
     useState(20);
 
+  const [saving, setSaving] =
+    useState(false);
+
+  /* ======================
+     📊 BMI
+  ====================== */
+
+  const bmi =
+    weight /
+    ((height / 100) *
+      (height / 100));
+
+  let bmiLabel = "";
+
+  if (bmi < 18.5) {
+
+    bmiLabel = "Sovány";
+
+  } else if (bmi < 25) {
+
+    bmiLabel = "Normál";
+
+  } else if (bmi < 30) {
+
+    bmiLabel = "Túlsúly";
+
+  } else {
+
+    bmiLabel = "Elhízás";
+  }
+
   /* ======================
      📱 RESIZE
   ====================== */
@@ -121,28 +154,37 @@ function LandingPage({ user }) {
 
   async function openDashboard() {
 
+    if (!user) {
+
+      alert(
+        "⏳ Betöltés folyamatban..."
+      );
+
+      return;
+    }
+
     try {
 
-      console.log("🔥 dashboard indítás");
+      setSaving(true);
 
-      if (user) {
+      console.log(
+        "🔥 dashboard indítás"
+      );
 
-        await saveQuestionnaire({
-          goal,
-          level: "Kezdő",
-          duration: workoutMinutes,
-          days: weeklyDays,
-          gender,
-          age,
-          weight,
-          height,
-        });
+      await saveQuestionnaire({
+        goal,
+        level: "Kezdő",
+        duration: workoutMinutes,
+        days: weeklyDays,
+        gender,
+        age,
+        weight,
+        height,
+      });
 
-        console.log(
-          "✅ questionnaire mentve"
-        );
-
-      }
+      console.log(
+        "✅ questionnaire mentve"
+      );
 
       navigate("/dashboard");
 
@@ -153,10 +195,14 @@ function LandingPage({ user }) {
         err
       );
 
-      navigate("/dashboard");
+      alert(
+        "Hiba történt mentés közben"
+      );
 
+    } finally {
+
+      setSaving(false);
     }
-
   }
 
   /* ======================
@@ -168,34 +214,36 @@ function LandingPage({ user }) {
       style={{
         minHeight: "100vh",
         background:
-          "linear-gradient(180deg,#020617 0%,#07111f 40%,#08121e 100%)",
+          "linear-gradient(180deg, #030712 0%, #07111f 38%, #08121e 100%)",
         color: "white",
         padding:
-          isMobile ? 16 : 28,
-        overflow: "hidden",
+          isMobile ? 16 : 24,
+        fontFamily:
+          "Inter, sans-serif",
       }}
     >
       <div
         style={{
-          maxWidth: 1350,
+          maxWidth: 1280,
           margin: "0 auto",
         }}
       >
 
-        {/* TOPBAR */}
+        {/* ======================
+            TOPBAR
+        ====================== */}
 
         <GlassCard
           style={{
             padding:
-              "18px 24px",
-            marginBottom: 34,
+              "16px 24px",
+            marginBottom: 30,
             display: "flex",
             justifyContent:
               "space-between",
             alignItems: "center",
           }}
         >
-
           <div
             style={{
               display: "flex",
@@ -207,413 +255,409 @@ function LandingPage({ user }) {
           >
             ⚡ Homefit
           </div>
-
-          {!isMobile && (
-            <div
-              style={{
-                display: "flex",
-                gap: 28,
-                color: "#94a3b8",
-                fontWeight: 600,
-              }}
-            >
-              <span>
-                Miért működik
-              </span>
-
-              <span>
-                Edzésterv
-              </span>
-
-              <span>
-                Kezdőknek
-              </span>
-            </div>
-          )}
-
         </GlassCard>
 
-        {/* HERO */}
+        {/* ======================
+            HERO
+        ====================== */}
 
-        <div
+        <GlassCard
           style={{
-            display: "grid",
-            gridTemplateColumns:
+            padding:
               isMobile
-                ? "1fr"
-                : "1.1fr 0.9fr",
-            gap: 24,
+                ? 24
+                : 42,
+            marginBottom: 30,
           }}
         >
 
-          {/* LEFT SIDE */}
-
-          <GlassCard
+          <div
             style={{
+              display:
+                "inline-block",
               padding:
+                "10px 18px",
+              borderRadius: 999,
+              background:
+                "rgba(34,197,94,0.15)",
+              color: "#bbf7d0",
+              fontWeight: 700,
+              marginBottom: 24,
+            }}
+          >
+            🏠 Otthoni edzés ·
+            kezdőknek ·
+            fogyáshoz
+          </div>
+
+          <h1
+            style={{
+              fontSize:
                 isMobile
-                  ? 28
-                  : 42,
-              position: "relative",
-              overflow: "hidden",
+                  ? 54
+                  : 82,
+              lineHeight: 0.95,
+              margin:
+                "0 0 28px 0",
+              fontWeight: 900,
+              letterSpacing:
+                "-4px",
+            }}
+          >
+            Személyre
+            szabott
+            <br />
+            otthoni
+            <br />
+            edzésterv
+          </h1>
+
+          <p
+            style={{
+              color: "#94a3b8",
+              fontSize: 22,
+              lineHeight: 1.7,
+              maxWidth: 650,
+            }}
+          >
+            Add meg az
+            alapadataid,
+            és kapsz egy
+            egyszerű,
+            követhető
+            heti tervet,
+            amit valóban
+            végig tudsz
+            csinálni
+            otthon.
+          </p>
+
+        </GlassCard>
+
+        {/* ======================
+            QUESTIONNAIRE
+        ====================== */}
+
+        <GlassCard
+          style={{
+            padding:
+              isMobile
+                ? 24
+                : 40,
+            marginBottom: 40,
+          }}
+        >
+
+          <h2
+            style={{
+              fontSize:
+                isMobile
+                  ? 48
+                  : 72,
+              marginBottom: 20,
+            }}
+          >
+            Kérdőív
+          </h2>
+
+          <p
+            style={{
+              color: "#94a3b8",
+              lineHeight: 1.8,
+              marginBottom: 30,
+              fontSize: 18,
+            }}
+          >
+            Add meg az
+            alapadataid,
+            és elkészítjük
+            a személyre
+            szabott heti
+            terved.
+          </p>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                isMobile
+                  ? "1fr"
+                  : "1fr 1fr",
+              gap: 20,
             }}
           >
 
-            {/* GLOW */}
+            {/* NEM */}
 
-            <div
-              style={{
-                position: "absolute",
-                width: 320,
-                height: 320,
-                borderRadius: "50%",
-                background:
-                  "rgba(34,197,94,0.12)",
-                filter:
-                  "blur(90px)",
-                top: -100,
-                left: -100,
-              }}
-            />
+            <div>
+              <label>Nem</label>
 
-            {/* BADGE */}
-
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 10,
-                padding:
-                  "10px 18px",
-                borderRadius: 999,
-                background:
-                  "rgba(34,197,94,0.12)",
-                border:
-                  "1px solid rgba(34,197,94,0.2)",
-                color: "#bbf7d0",
-                fontWeight: 700,
-                marginBottom: 30,
-                position: "relative",
-                zIndex: 2,
-              }}
-            >
-              🏠 Otthoni edzés ·
-              kezdőknek · fogyáshoz
-            </div>
-
-            {/* TITLE */}
-
-            <h1
-              style={{
-                fontSize:
-                  isMobile
-                    ? 54
-                    : 92,
-                lineHeight: 0.95,
-                letterSpacing:
-                  "-4px",
-                fontWeight: 900,
-                marginBottom: 28,
-                maxWidth: 760,
-                position: "relative",
-                zIndex: 2,
-              }}
-            >
-              Személyre
-              szabott
-              <br />
-              otthoni
-              <br />
-              edzésterv
-            </h1>
-
-            {/* TEXT */}
-
-            <p
-              style={{
-                fontSize: 21,
-                lineHeight: 1.8,
-                color: "#94a3b8",
-                maxWidth: 720,
-                marginBottom: 34,
-                position: "relative",
-                zIndex: 2,
-              }}
-            >
-              Add meg az
-              alapadataid,
-              és kapsz egy
-              egyszerű,
-              követhető heti
-              tervet,
-              amit valóban
-              végig tudsz
-              csinálni otthon.
-            </p>
-
-            {/* BUTTONS */}
-
-            <div
-              style={{
-                display: "flex",
-                gap: 16,
-                flexWrap: "wrap",
-                marginBottom: 36,
-                position: "relative",
-                zIndex: 2,
-              }}
-            >
-
-              <button
-                onClick={
-                  openDashboard
+              <select
+                value={gender}
+                onChange={(e) =>
+                  setGender(
+                    e.target.value
+                  )
                 }
                 style={{
-                  padding:
-                    "18px 28px",
-                  borderRadius: 20,
-                  border: "none",
-                  background:
-                    "linear-gradient(135deg,#22c55e,#14b8a6)",
+                  ...inputStyle,
                   color: "white",
-                  fontWeight: 800,
-                  fontSize: 18,
-                  cursor: "pointer",
-                  boxShadow:
-                    "0 0 40px rgba(34,197,94,0.25)",
+                  background: "#0f172a",
                 }}
               >
-                🔥 Edzésterv
-                készítése
-              </button>
+                <option value="Nő">
+                  Nő
+                </option>
 
-              <button
-                style={{
-                  padding:
-                    "18px 28px",
-                  borderRadius: 20,
-                  border:
-                    "1px solid rgba(255,255,255,0.08)",
-                  background:
-                    "rgba(255,255,255,0.03)",
-                  color: "white",
-                  fontWeight: 700,
-                  fontSize: 18,
-                  cursor: "pointer",
-                }}
+                <option value="Férfi">
+                  Férfi
+                </option>
+              </select>
+            </div>
+
+            {/* ÉLETKOR */}
+
+            <div>
+              <label>
+                Életkor
+              </label>
+
+              <input
+                type="number"
+                value={age}
+                onChange={(e) =>
+                  setAge(
+                    Number(
+                      e.target.value
+                    )
+                  )
+                }
+                style={inputStyle}
+              />
+            </div>
+
+            {/* TESTSÚLY */}
+
+            <div>
+              <label>
+                Testsúly
+              </label>
+
+              <input
+                type="number"
+                value={weight}
+                onChange={(e) =>
+                  setWeight(
+                    Number(
+                      e.target.value
+                    )
+                  )
+                }
+                style={inputStyle}
+              />
+            </div>
+
+            {/* MAGASSÁG */}
+
+            <div>
+              <label>
+                Magasság
+              </label>
+
+              <input
+                type="number"
+                value={height}
+                onChange={(e) =>
+                  setHeight(
+                    Number(
+                      e.target.value
+                    )
+                  )
+                }
+                style={inputStyle}
+              />
+            </div>
+
+            {/* CÉL */}
+
+            <div>
+              <label>Cél</label>
+
+              <select
+                value={goal}
+                onChange={(e) =>
+                  setGoal(
+                    e.target.value
+                  )
+                }
+                style={inputStyle}
               >
-                Demó
-                kipróbálása
-              </button>
+                <option>
+                  Fogyás
+                </option>
 
+                <option>
+                  Erősödés
+                </option>
+
+                <option>
+                  Állóképesség
+                </option>
+              </select>
             </div>
 
-            {/* STATS */}
+            {/* HETI NAPOK */}
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  isMobile
-                    ? "1fr"
-                    : "repeat(3,1fr)",
-                gap: 16,
-                position: "relative",
-                zIndex: 2,
-              }}
-            >
+            <div>
+              <label>
+                Heti napok
+              </label>
 
-              {[
-                [
-                  "1 perc",
-                  "ennyi idő a kitöltés"
-                ],
-
-                [
-                  "15–30 perc",
-                  "rövid edzésblokkok"
-                ],
-
-                [
-                  "2–5 nap",
-                  "rugalmas heti terv"
-                ],
-
-              ].map(
-                (item, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      background:
-                        "rgba(255,255,255,0.03)",
-                      border:
-                        "1px solid rgba(255,255,255,0.06)",
-                      borderRadius: 24,
-                      padding: 22,
-                    }}
-                  >
-
-                    <div
-                      style={{
-                        fontSize: 34,
-                        fontWeight: 900,
-                        marginBottom: 8,
-                      }}
-                    >
-                      {item[0]}
-                    </div>
-
-                    <div
-                      style={{
-                        color:
-                          "#94a3b8",
-                        lineHeight: 1.6,
-                      }}
-                    >
-                      {item[1]}
-                    </div>
-
-                  </div>
-                )
-              )}
-
+              <input
+                type="number"
+                value={
+                  weeklyDays
+                }
+                onChange={(e) =>
+                  setWeeklyDays(
+                    Number(
+                      e.target.value
+                    )
+                  )
+                }
+                style={inputStyle}
+              />
             </div>
 
-          </GlassCard>
+            {/* EDZÉSIDŐ */}
 
-          {/* RIGHT SIDE */}
+            <div>
+              <label>
+                Edzésidő
+                (perc)
+              </label>
 
-          <GlassCard
+              <input
+                type="number"
+                value={
+                  workoutMinutes
+                }
+                onChange={(e) =>
+                  setWorkoutMinutes(
+                    Number(
+                      e.target.value
+                    )
+                  )
+                }
+                style={inputStyle}
+              />
+            </div>
+
+          </div>
+
+          {/* BMI */}
+
+          <div
             style={{
-              padding: 28,
+              marginTop: 24,
+              padding: 24,
+              borderRadius: 24,
+              background:
+                "rgba(255,255,255,0.03)",
+              border:
+                "1px solid rgba(255,255,255,0.08)",
             }}
           >
 
             <div
               style={{
-                display: "flex",
-                justifyContent:
-                  "space-between",
-                alignItems: "center",
-                marginBottom: 24,
+                fontSize: 18,
+                color: "#94a3b8",
+                marginBottom: 10,
               }}
             >
-
-              <div
-                style={{
-                  fontSize: 20,
-                  fontWeight: 800,
-                }}
-              >
-                App előnézet
-              </div>
-
-              <div
-                style={{
-                  padding:
-                    "8px 14px",
-                  borderRadius: 999,
-                  background:
-                    "rgba(34,197,94,0.12)",
-                  color: "#bbf7d0",
-                  fontWeight: 700,
-                  fontSize: 13,
-                }}
-              >
-                Kezdőbarát
-              </div>
-
+              BMI
             </div>
 
-            {[
-              {
-                title:
-                  "1. nap • teljes test",
-                list: [
-                  "Guggolás",
-                  "Térdelő fekvőtámasz",
-                  "Plank",
-                ],
-              },
+            <div
+              style={{
+                fontSize: 42,
+                fontWeight: 900,
+              }}
+            >
+              {bmi.toFixed(1)}
+            </div>
 
-              {
-                title:
-                  "2. nap • teljes test",
-                list: [
-                  "Glute bridge",
-                  "Helyben járás",
-                  "Bird-dog",
-                ],
-              },
+            <div
+              style={{
+                fontSize: 18,
+                color: "#94a3b8",
+                marginTop: 8,
+              }}
+            >
+              {bmiLabel}
+            </div>
 
-              {
-                title:
-                  "3. nap • teljes test",
-                list: [
-                  "Falnál ülés",
-                  "Hasprés",
-                  "Térdemelés helyben",
-                ],
-              },
+          </div>
 
-            ].map(
-              (day, i) => (
-                <div
-                  key={i}
-                  style={{
-                    background:
-                      "rgba(255,255,255,0.03)",
-                    border:
-                      "1px solid rgba(255,255,255,0.06)",
-                    borderRadius: 28,
-                    padding: 24,
-                    marginBottom: 18,
-                  }}
-                >
+          {/* BUTTON */}
 
-                  <div
-                    style={{
-                      fontSize: 28,
-                      fontWeight: 800,
-                      marginBottom: 18,
-                    }}
-                  >
-                    {day.title}
-                  </div>
+          <button
+            disabled={saving}
+            onClick={
+              openDashboard
+            }
+            style={{
+              marginTop: 30,
+              width: "100%",
+              padding:
+                "20px",
+              borderRadius: 22,
+              border: "none",
+              background:
+                "linear-gradient(135deg,#22c55e,#14b8a6)",
+              color: "white",
+              fontWeight: 900,
+              fontSize: 20,
+              cursor: "pointer",
+              opacity:
+                saving ? 0.7 : 1,
+              boxShadow:
+                "0 10px 30px rgba(34,197,94,0.25)",
+            }}
+          >
+            {
+              saving
+                ? "Mentés..."
+                : "🔥 Edzésterv generálása"
+            }
+          </button>
 
-                  <ul
-                    style={{
-                      color:
-                        "#94a3b8",
-                      lineHeight: 2.2,
-                      paddingLeft: 20,
-                      fontSize: 17,
-                    }}
-                  >
-                    {day.list.map(
-                      (
-                        item,
-                        idx
-                      ) => (
-                        <li key={idx}>
-                          {item}
-                        </li>
-                      )
-                    )}
-                  </ul>
-
-                </div>
-              )
-            )}
-
-          </GlassCard>
-
-        </div>
+        </GlassCard>
 
       </div>
     </div>
   );
 }
+
+/* =======================================================
+   🎨 INPUT STYLE
+======================================================= */
+
+const inputStyle = {
+  width: "100%",
+  padding: "18px",
+  marginTop: 8,
+  borderRadius: 18,
+  border:
+    "1px solid rgba(255,255,255,0.08)",
+  background:
+    "rgba(255,255,255,0.03)",
+  color: "white",
+  fontSize: 16,
+  outline: "none",
+  boxSizing: "border-box",
+};
 
 /* =======================================================
    🚀 APP
@@ -625,7 +669,7 @@ function App() {
     useState(null);
 
   /* ======================
-     🔐 LOGIN
+     🔐 ANON LOGIN
   ====================== */
 
   useEffect(() => {
@@ -670,7 +714,9 @@ function App() {
                 "✅ profile kész"
               );
 
-            } catch (err) {
+            } catch (
+              err
+            ) {
 
               console.error(
                 "❌ profile hiba:",
